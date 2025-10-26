@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Python library for controlling Saunum sauna controllers via Modbus"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "Mario Mett", email = "mario@mett.ee"}
 ]
@@ -16,7 +16,6 @@ keywords = ["saunum", "sauna", "modbus", "home-automation"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
