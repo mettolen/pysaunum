@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "Mario Mett", email = "mario@mett.ee"}
 ]
 keywords = ["saunum", "sauna", "modbus", "home-automation"]
 classifiers = [
@@ -39,9 +39,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/pysaunum"
-Repository = "https://github.com/yourusername/pysaunum"
-Issues = "https://github.com/yourusername/pysaunum/issues"
+Homepage = "https://github.com/mettolen/pysaunum"
+Repository = "https://github.com/mettolen/pysaunum"
+Issues = "https://github.com/mettolen/pysaunum/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
