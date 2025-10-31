@@ -5,31 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2025-11-01
 
 ### Added
 
-- New features that have been added
+- Factory method pattern (`SaunumClient.create()`) for explicit async initialization
+  - Automatically establishes connection before returning client
+  - Recommended for production use to guarantee connection state
+  - Example: `client = await SaunumClient.create("192.168.1.100")`
+- Pre-commit configuration with automated code quality checks
+  - Ruff linter and formatter
+  - MyPy strict type checking
+  - Standard pre-commit hooks (trailing whitespace, EOF, YAML/JSON/TOML validation)
+- Comprehensive tests for factory method (5 new tests)
+- Advanced usage examples in `example_factory.py`
+- NullHandler to logger to prevent "no handlers found" warnings
 
 ### Changed
 
-- Changes to existing functionality
+- Version management now uses `importlib.metadata` for single source of truth from `pyproject.toml`
+- Updated README.md to recommend factory method as primary usage pattern
+- Updated CONTRIBUTING.md with pre-commit setup and workflow instructions
+- Updated MANIFEST.in to include all documentation files
 
-### Deprecated
+### Improved
 
-- Features that will be removed in upcoming releases
+- Debug logging added to factory method for better troubleshooting
+- Documentation expanded with factory method examples and patterns
+- Test coverage maintained at 100% (61 tests total, up from 56)
 
-### Removed
+### Developer Experience
 
-- Features that have been removed
-
-### Fixed
-
-- Bug fixes
-
-### Security
-
-- Security improvements
+- Pre-commit hooks ensure code quality before commits
+- Automated linting and formatting with ruff
+- Strict type checking with mypy
+- Single command setup: `pip install pre-commit && pre-commit install`
 
 ## [0.1.0] - 2025-10-26
 
