@@ -44,6 +44,7 @@ from .exceptions import (
 from .models import SaunumData
 
 _LOGGER = logging.getLogger(__name__)
+_LOGGER.addHandler(logging.NullHandler())
 
 
 class SaunumClient:
@@ -63,6 +64,10 @@ class SaunumClient:
             port: Modbus TCP port (default: 502)
             device_id: Modbus device/unit ID (default: 1)
             timeout: Connection timeout in seconds (default: 10)
+
+        Note:
+            For production use, prefer using the create() factory method
+            which ensures the connection is established before returning.
         """
         self._host = host
         self._port = port
@@ -73,6 +78,44 @@ class SaunumClient:
             port=port,
             timeout=timeout,
         )
+
+    @classmethod
+    async def create(
+        cls,
+        host: str,
+        port: int = DEFAULT_PORT,
+        device_id: int = DEFAULT_DEVICE_ID,
+        timeout: int = DEFAULT_TIMEOUT,
+    ) -> SaunumClient:
+        """Create and connect a SaunumClient instance.
+
+        This factory method creates a client and ensures it's connected
+        before returning. This is the recommended way to create clients
+        for production use.
+
+        Args:
+            host: IP address or hostname of the sauna controller
+            port: Modbus TCP port (default: 502)
+            device_id: Modbus device/unit ID (default: 1)
+            timeout: Connection timeout in seconds (default: 10)
+
+        Returns:
+            Connected SaunumClient instance
+
+        Raises:
+            SaunumConnectionError: If connection fails
+            SaunumTimeoutError: If connection times out
+
+        Example:
+            >>> client = await SaunumClient.create("192.168.1.100")
+            >>> # Client is already connected and ready to use
+            >>> data = await client.async_get_data()
+        """
+        _LOGGER.debug("Creating client for %s:%s", host, port)
+        client = cls(host=host, port=port, device_id=device_id, timeout=timeout)
+        await client.connect()
+        _LOGGER.debug("Client created and connected to %s:%s", host, port)
+        return client
 
     @property
     def host(self) -> str:

@@ -32,7 +32,16 @@ Thank you for your interest in contributing to pysaunum! This document provides 
    pip install -e ".[dev]"
    ```
 
-4. **Verify the setup**:
+4. **Install pre-commit hooks** (optional but recommended):
+
+   ```bash
+   pip install pre-commit
+   pre-commit install
+   ```
+
+   This will automatically run linting and formatting checks before each commit.
+
+5. **Verify the setup**:
 
    ```bash
    pytest
@@ -104,7 +113,15 @@ Code is automatically formatted with ruff:
 ruff format src/pysaunum tests/
 ```
 
-### 7. Commit Your Changes
+### 7. Run Pre-commit Checks (Optional)
+
+If you installed pre-commit hooks, they'll run automatically. You can also run them manually:
+
+```bash
+pre-commit run --all-files
+```
+
+### 8. Commit Your Changes
 
 Write clear, descriptive commit messages:
 
@@ -124,7 +141,7 @@ git commit -m "Add support for fan speed control
 - Add detailed description after a blank line if needed
 - Reference issue numbers when applicable
 
-### 8. Push and Create Pull Request
+### 9. Push and Create Pull Request
 
 ```bash
 git push origin feature/your-feature-name

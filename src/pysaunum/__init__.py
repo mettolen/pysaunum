@@ -1,5 +1,7 @@
 """Python library for controlling Saunum sauna controllers."""
 
+from importlib.metadata import version
+
 from .client import SaunumClient
 from .const import (
     DEFAULT_PORT,
@@ -30,7 +32,7 @@ from .exceptions import (
 )
 from .models import SaunumData
 
-__version__ = "0.1.0"
+__version__ = version("pysaunum")
 
 __all__ = [
     "SaunumClient",

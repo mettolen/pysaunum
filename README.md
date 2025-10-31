@@ -24,17 +24,18 @@ pip install pysaunum
 
 ## Quick Start
 
+### Using Factory Method (Recommended)
+
+The factory method automatically establishes a connection before returning the client:
+
 ```python
 import asyncio
 from pysaunum import SaunumClient, SaunumConnectionError
 
 async def main():
-    # Create client - replace with your sauna controller's IP
-    client = SaunumClient(host="192.168.1.100", port=502, device_id=1)
-
     try:
-        # Connect to the sauna controller
-        await client.connect()
+        # Create and connect - client is ready to use immediately
+        client = await SaunumClient.create("192.168.1.100")
 
         # Read current state
         data = await client.async_get_data()
@@ -51,6 +52,35 @@ async def main():
 
         # Stop the session when done
         await client.async_stop_session()
+
+    except SaunumConnectionError as err:
+        print(f"Connection error: {err}")
+    finally:
+        # Close connection (synchronous method)
+        client.close()
+
+asyncio.run(main())
+```
+
+### Traditional Method
+
+You can also create and connect manually:
+
+```python
+import asyncio
+from pysaunum import SaunumClient, SaunumConnectionError
+
+async def main():
+    # Create client - replace with your sauna controller's IP
+    client = SaunumClient(host="192.168.1.100", port=502, device_id=1)
+
+    try:
+        # Must explicitly connect before using
+        await client.connect()
+
+        # Read current state
+        data = await client.async_get_data()
+        print(f"Current temperature: {data.current_temperature}°C")
 
     except SaunumConnectionError as err:
         print(f"Connection error: {err}")
