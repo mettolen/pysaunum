@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
+import inspect
 import logging
-from typing import Any
+from typing import Any, cast
 
 from pymodbus.client import AsyncModbusTcpClient
 from pymodbus.exceptions import ModbusException
@@ -154,12 +156,6 @@ class SaunumClient:
                 f"Failed to connect to {self._host}:{self._port}: {err}"
             ) from err
 
-    def close(self) -> None:
-        """Close the connection to the sauna controller."""
-        if self._client.connected:
-            self._client.close()
-            _LOGGER.info("Closed connection to %s:%s", self._host, self._port)
-
     async def async_get_data(self) -> SaunumData:
         """Fetch current data from the sauna controller.
 
@@ -182,10 +178,9 @@ class SaunumClient:
                 count=7,
                 device_id=self._device_id,
             )
-            if control_result.isError():
-                raise SaunumCommunicationError(
-                    f"Failed to read control registers: {control_result}"
-                )
+            control_regs = self._validate_registers(
+                "control", control_result, expected_count=7
+            )
 
             # Read status sensors (registers 100-104)
             status_result = await self._client.read_holding_registers(
@@ -193,10 +188,9 @@ class SaunumClient:
                 count=5,
                 device_id=self._device_id,
             )
-            if status_result.isError():
-                raise SaunumCommunicationError(
-                    f"Failed to read status registers: {status_result}"
-                )
+            status_regs = self._validate_registers(
+                "status", status_result, expected_count=5
+            )
 
             # Read alarm status (registers 200-205)
             alarm_result = await self._client.read_holding_registers(
@@ -204,14 +198,9 @@ class SaunumClient:
                 count=6,
                 device_id=self._device_id,
             )
-            if alarm_result.isError():
-                raise SaunumCommunicationError(
-                    f"Failed to read alarm registers: {alarm_result}"
-                )
-
-            control_regs = control_result.registers
-            status_regs = status_result.registers
-            alarm_regs = alarm_result.registers
+            alarm_regs = self._validate_registers(
+                "alarm", alarm_result, expected_count=6
+            )
 
             # Parse control parameters
             session_active = bool(control_regs[0])
@@ -496,10 +485,26 @@ class SaunumClient:
                     f"Failed to write register {address}: {result}"
                 )
 
+        except TimeoutError as err:
+            raise SaunumTimeoutError(
+                f"Timeout writing register {address} to {self._host}:{self._port}"
+            ) from err
         except ModbusException as err:
             raise SaunumCommunicationError(
                 f"Modbus error writing register {address}: {err}"
             ) from err
+
+    async def async_close(self) -> None:
+        """Close the connection to the sauna controller asynchronously."""
+        if not self._client.connected:
+            return
+
+        close_method = self._client.close  # Capture to avoid pylint no-return warning
+        result = cast(Any, close_method())
+        if inspect.isawaitable(result):
+            await result
+
+        _LOGGER.info("Closed connection to %s:%s", self._host, self._port)
 
     async def __aenter__(self) -> SaunumClient:
         """Async context manager entry."""
@@ -508,4 +513,45 @@ class SaunumClient:
 
     async def __aexit__(self, *args: Any) -> None:
         """Async context manager exit."""
-        self.close()
+        await self.async_close()
+
+    @staticmethod
+    def _validate_registers(name: str, result: Any, expected_count: int) -> list[int]:
+        """Validate Modbus register read response length."""
+        if result.isError():
+            raise SaunumCommunicationError(f"Failed to read {name} registers: {result}")
+
+        registers = getattr(result, "registers", None)
+        if registers is None or len(registers) < expected_count:
+            actual_count = 0 if registers is None else len(registers)
+            raise SaunumInvalidDataError(
+                f"Incomplete {name} register data: "
+                f"expected {expected_count}, got {actual_count}"
+            )
+
+        return cast(list[int], registers)
+
+    def close(self) -> None:
+        """Close the connection synchronously (best effort).
+
+        If the underlying client returns an awaitable close, this schedules
+        it when a running loop is present or runs it in a new event loop when
+        none is running. Prefer ``async_close`` in async contexts.
+        """
+
+        if not self._client.connected:
+            return
+
+        close_method = self._client.close
+        if inspect.iscoroutinefunction(close_method):
+            close_coro = close_method()  # pylint: disable=assignment-from-no-return
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                asyncio.run(close_coro)
+            else:
+                loop.create_task(close_coro)
+        else:
+            close_method()
+
+        _LOGGER.info("Closed connection to %s:%s", self._host, self._port)

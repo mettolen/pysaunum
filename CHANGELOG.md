@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-01-13
+
+### Added
+
+- `async_close()` method for proper async cleanup of connections
+- Comprehensive register validation before parsing
+- Timeout handling for write operations
+
+### Changed
+
+- Async context manager (`__aexit__`) now uses `async_close()` instead of `close()`
+- Synchronous `close()` method enhanced to handle awaitable close methods
+
+### Improved
+
+- Better error messages for invalid register data
+- Type safety with explicit casting to avoid pylint warnings
+- More robust connection lifecycle management
+
+### Fixed
+
+- @mikz fixed issue negative current temperature decoding
+
+### Developer Experience
+
+- Additional test coverage for:
+  - Write timeout scenarios
+  - Async close with coroutine handling
+  - Register validation edge cases
+
 ## [0.2.0] - 2025-11-01
 
 ### Added
@@ -62,5 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - pymodbus >= 3.11.2
 
-[Unreleased]: https://github.com/mettolen/pysaunum/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/mettolen/pysaunum/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/mettolen/pysaunum/releases/tag/v0.3.0
+[0.2.0]: https://github.com/mettolen/pysaunum/releases/tag/v0.2.0
 [0.1.0]: https://github.com/mettolen/pysaunum/releases/tag/v0.1.0

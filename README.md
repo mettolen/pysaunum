@@ -2,6 +2,8 @@
 
 Python library for controlling [Saunum](https://saunum.com/) sauna controllers via Modbus TCP.
 
+This library is used by the [Saunum Home Assistant integration](https://www.home-assistant.io/integrations/saunum).
+
 ## Features
 
 - 🔌 **Async/await support** using asyncio with comprehensive error handling
@@ -270,6 +272,7 @@ The library maintains **100% test coverage** with comprehensive tests including:
 This library is tested and compatible with:
 
 - Saunum sauna controllers with Modbus TCP interface
+  - Tested with control panel v1.1.24 and power unit v1.1.43
 - Home Assistant integration
 - Python 3.11, 3.12, 3.13+
 
