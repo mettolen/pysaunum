@@ -1,6 +1,8 @@
 """Tests for SaunumClient."""
 # pylint: disable=redefined-outer-name
 
+import asyncio
+import threading
 from collections.abc import Iterator
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -892,3 +894,90 @@ async def test_get_data_fan_speed_validation(mock_modbus_client: MagicMock) -> N
 
     data = await client.async_get_data()
     assert data.fan_speed is None
+
+
+@pytest.mark.asyncio
+async def test_get_data_invalid_data_error(mock_modbus_client: MagicMock) -> None:
+    """Test get_data when invalid data structure causes parsing error."""
+    mock_modbus_client.connected = True
+
+    # Mock valid response structure but cause ValueError in SaunumData creation
+    control_response = MagicMock()
+    control_response.isError.return_value = False
+    control_response.registers = [1, 1, 60, 0, 80, 3, 1]
+
+    status_response = MagicMock()
+    status_response.isError.return_value = False
+    status_response.registers = [75, 0, 100, 3, 0]
+
+    alarm_response = MagicMock()
+    alarm_response.isError.return_value = False
+    alarm_response.registers = [0, 0, 0, 0, 0, 0]
+
+    mock_modbus_client.read_holding_registers.side_effect = [
+        control_response,
+        status_response,
+        alarm_response,
+    ]
+
+    client = SaunumClient(host="192.168.1.100")
+
+    # Mock SaunumData to raise a ValueError
+    with patch("pysaunum.client.SaunumData") as mock_data:
+        mock_data.side_effect = ValueError("Test error")
+        with pytest.raises(SaunumInvalidDataError, match="Invalid data received"):
+            await client.async_get_data()
+
+
+@pytest.mark.asyncio
+async def test_async_close_when_not_connected(mock_modbus_client: MagicMock) -> None:
+    """Test async_close when client is not connected."""
+    mock_modbus_client.connected = False
+
+    client = SaunumClient(host="192.168.1.100")
+    await client.async_close()
+
+    # close should not be called when not connected
+    mock_modbus_client.close.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_close_with_coroutine_function(mock_modbus_client: MagicMock) -> None:
+    """Test close when client.close is a coroutine function."""
+    mock_modbus_client.connected = True
+
+    async def async_close_method():
+        """Mock async close method."""
+
+    mock_modbus_client.close = async_close_method
+
+    client = SaunumClient(host="192.168.1.100")
+    client.close()
+
+    # Give the event loop time to process the task
+    await asyncio.sleep(0.1)
+
+
+@pytest.mark.asyncio
+async def test_close_with_coroutine_no_running_loop(
+    mock_modbus_client: MagicMock,
+) -> None:
+    """Test close when client.close is a coroutine function and no loop is running."""
+    mock_modbus_client.connected = True
+
+    async def async_close_method():
+        """Mock async close method."""
+
+    mock_modbus_client.close = async_close_method
+
+    client = SaunumClient(host="192.168.1.100")
+
+    # Run in a separate thread without event loop
+
+    def run_close():
+        """Run close in thread without event loop."""
+        client.close()
+
+    thread = threading.Thread(target=run_close)
+    thread.start()
+    thread.join(timeout=1.0)

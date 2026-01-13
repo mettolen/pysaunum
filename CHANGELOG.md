@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `async_close()` method for proper async cleanup of connections
 - Comprehensive register validation before parsing
 - Timeout handling for write operations
-- Resilient version lookup with fallback for editable installs
 
 ### Changed
 

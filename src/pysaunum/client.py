@@ -519,7 +519,7 @@ class SaunumClient:
                 f"expected {expected_count}, got {actual_count}"
             )
 
-        return registers
+        return cast(list[int], registers)
 
     def close(self) -> None:
         """Close the connection synchronously (best effort).

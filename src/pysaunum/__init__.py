@@ -1,6 +1,6 @@
 """Python library for controlling Saunum sauna controllers."""
 
-from importlib.metadata import PackageNotFoundError, version
+from importlib.metadata import version
 
 from .client import SaunumClient
 from .const import (
@@ -32,10 +32,7 @@ from .exceptions import (
 )
 from .models import SaunumData
 
-try:
-    __version__ = version("pysaunum")
-except PackageNotFoundError:
-    __version__ = "0.0.0"
+__version__ = version("pysaunum")
 
 __all__ = [
     "SaunumClient",
