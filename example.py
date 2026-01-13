@@ -24,7 +24,7 @@ from pysaunum.const import (
 async def main():
     """Example main function demonstrating all pysaunum features."""
     # Create client - replace with your sauna controller's IP
-    client = SaunumClient(host="192.168.1.100", port=502, device_id=1)
+    client = SaunumClient(host="192.168.1.100", port=502)
 
     try:
         # Connect to the sauna controller
@@ -75,6 +75,8 @@ async def main():
         print("\nStarting sauna session...")
         await client.async_start_session()
 
+        await asyncio.sleep(2)
+
         # Read updated state
         print("\nReading updated state after configuration...")
         data = await client.async_get_data()
@@ -96,19 +98,13 @@ async def main():
         ]:
             print(f"Setting fan to {name}...")
             await client.async_set_fan_speed(speed)
-            await asyncio.sleep(1)  # Small delay for demonstration
-
-        # Demonstrate zero value support
-        print("\nDemonstrating zero value support...")
-        print("Setting temperature to 0 (heater off)...")
-        await client.async_set_target_temperature(0)
-
-        print("Setting fan duration to 0 (continuous)...")
-        await client.async_set_fan_duration(0)
+            await asyncio.sleep(2)  # Small delay for demonstration
 
         # Stop the session
         print("\nStopping session...")
         await client.async_stop_session()
+
+        await asyncio.sleep(2)
 
         # Demonstrate light control
         print("\nTesting light control...")

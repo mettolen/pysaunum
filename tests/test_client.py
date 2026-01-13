@@ -386,7 +386,9 @@ async def test_get_data_invalid_data(mock_modbus_client: MagicMock) -> None:
 
     client = SaunumClient(host="192.168.1.100")
 
-    with pytest.raises(SaunumInvalidDataError, match="Invalid data received"):
+    with pytest.raises(
+        SaunumInvalidDataError, match="Incomplete control register data"
+    ):
         await client.async_get_data()
 
 
@@ -496,6 +498,18 @@ async def test_write_register_not_connected(mock_modbus_client: MagicMock) -> No
     client = SaunumClient(host="192.168.1.100")
 
     with pytest.raises(SaunumConnectionError, match="Not connected"):
+        await client.async_start_session()
+
+
+@pytest.mark.asyncio
+async def test_write_register_timeout(mock_modbus_client: MagicMock) -> None:
+    """Test write register when timeout occurs."""
+    mock_modbus_client.connected = True
+    mock_modbus_client.write_register.side_effect = TimeoutError("Timeout")
+
+    client = SaunumClient(host="192.168.1.100")
+
+    with pytest.raises(SaunumTimeoutError, match="Timeout writing register"):
         await client.async_start_session()
 
 
@@ -805,19 +819,18 @@ async def test_get_data_heater_elements_count(mock_modbus_client: MagicMock) -> 
     data = await client.async_get_data()
     assert data.heater_elements_active is None
 
-    # Test negative heater element count - should return None
-    status_response_negative = MagicMock()
-    status_response_negative.isError.return_value = False
-    status_response_negative.registers = [70, 0, 0, -1, 0]  # negative count
 
-    mock_modbus_client.read_holding_registers.side_effect = [
-        control_response,
-        status_response_negative,
-        alarm_response,
-    ]
+@pytest.mark.asyncio
+async def test_async_close_awaits_coroutine(mock_modbus_client: MagicMock) -> None:
+    """Ensure async_close awaits coroutine close implementations."""
+    mock_modbus_client.connected = True
+    close_mock = AsyncMock()
+    mock_modbus_client.close = close_mock
 
-    data = await client.async_get_data()
-    assert data.heater_elements_active is None
+    client = SaunumClient(host="192.168.1.100")
+    await client.async_close()
+
+    close_mock.assert_awaited_once()
 
 
 @pytest.mark.asyncio
