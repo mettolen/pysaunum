@@ -131,6 +131,41 @@ async def test_get_data_success(mock_modbus_client: MagicMock) -> None:
 
 
 @pytest.mark.asyncio
+async def test_get_data_negative_current_temperature(
+    mock_modbus_client: MagicMock,
+) -> None:
+    """Test current temperature parsing for negative values.
+
+    Saunum encodes negative temperatures as signed 16-bit integers. When read as an
+    unsigned Modbus register, -1°C is represented as 65535 (0xFFFF).
+    """
+    mock_modbus_client.connected = True
+
+    control_response = MagicMock()
+    control_response.isError.return_value = False
+    control_response.registers = [0, 0, 0, 0, 0, 0, 0]
+
+    status_response = MagicMock()
+    status_response.isError.return_value = False
+    status_response.registers = [65535, 0, 0, 0, 0]
+
+    alarm_response = MagicMock()
+    alarm_response.isError.return_value = False
+    alarm_response.registers = [0, 0, 0, 0, 0, 0]
+
+    mock_modbus_client.read_holding_registers.side_effect = [
+        control_response,
+        status_response,
+        alarm_response,
+    ]
+
+    client = SaunumClient(host="192.168.1.100")
+    data = await client.async_get_data()
+
+    assert data.current_temperature == -1.0
+
+
+@pytest.mark.asyncio
 async def test_get_data_not_connected(mock_modbus_client: MagicMock) -> None:
     """Test get_data when not connected."""
     mock_modbus_client.connected = False

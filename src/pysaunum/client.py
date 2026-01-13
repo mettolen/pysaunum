@@ -46,6 +46,14 @@ from .models import SaunumData
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.addHandler(logging.NullHandler())
 
+_UINT16_MAX = 0x10000
+_INT16_SIGN_BIT = 0x8000
+
+
+def _decode_int16(value: int) -> int:
+    """Decode an unsigned 16-bit Modbus register as a signed integer."""
+    return value - _UINT16_MAX if value >= _INT16_SIGN_BIT else value
+
 
 class SaunumClient:
     """Client for Saunum sauna controller."""
@@ -241,7 +249,9 @@ class SaunumClient:
             light_on = bool(control_regs[6]) if control_regs[6] >= 0 else None
 
             # Parse status sensors
-            current_temp = float(status_regs[0]) if status_regs[0] >= 0 else None
+            current_temp = (
+                float(_decode_int16(status_regs[0])) if status_regs[0] >= 0 else None
+            )
 
             # Combine 32-bit on time from two 16-bit registers
             on_time_high = status_regs[1]
