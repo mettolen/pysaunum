@@ -43,6 +43,9 @@ Homepage = "https://github.com/mettolen/pysaunum"
 Repository = "https://github.com/mettolen/pysaunum"
 Issues = "https://github.com/mettolen/pysaunum/issues"
 
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
