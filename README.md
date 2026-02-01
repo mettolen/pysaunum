@@ -1,8 +1,19 @@
 # pysaunum
 
+[![CI](https://github.com/mettolen/pysaunum/actions/workflows/ci.yml/badge.svg)](https://github.com/mettolen/pysaunum/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/mettolen/pysaunum/branch/main/graph/badge.svg)](https://codecov.io/gh/mettolen/pysaunum)
+[![PyPI version](https://badge.fury.io/py/pysaunum.svg)](https://badge.fury.io/py/pysaunum)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/pysaunum.svg)](https://pypi.org/project/pysaunum/)
+[![Python versions](https://img.shields.io/pypi/pyversions/pysaunum.svg)](https://pypi.org/project/pysaunum/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Python library for controlling [Saunum](https://saunum.com/) sauna controllers via Modbus TCP.
 
-This library is used by the [Saunum Home Assistant integration](https://www.home-assistant.io/integrations/saunum).
+---
+
+This library is used by the [Saunum](https://www.home-assistant.io/integrations/saunum) Home Assistant integration.
+
+<a href="https://www.home-assistant.io/integrations/saunum/" target="_blank"><img alt="Dynamic Regex Badge" src="https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fwww.home-assistant.io%2Fintegrations%2Fsaunum%2F&search=(%5B%5Cd%2C%5D%2B)%5Cs*%3C%2Fa%3E%5Cs*active%20installations&replace=%241&style=for-the-badge&logo=homeassistant&label=Active%20installations&labelColor=%23f2f4f9&color=%2346bdf4"></a> <a href="https://www.home-assistant.io/docs/quality_scale/" target="_blank"><img alt="Dynamic Regex Badge" src="https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fwww.home-assistant.io%2Fintegrations%2Fsaunum%2F&search=%3Ca%20href%3D'%5B%5E'%5D*quality_scale%5B%5E'%5D*'%3E(%5B%5E%3C%5D%2B%3F)%20quality%3C%2Fa%3E&replace=%241&style=for-the-badge&logo=homeassistant&label=Quality%20scale&labelColor=%23f2f4f9&color=%2346bdf4"></a> <a href="https://my.home-assistant.io/redirect/config_flow_start?domain=saunum" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/Saunum-i?style=for-the-badge&logo=homeassistant&label=Add%20integration&labelColor=%23f2f4f9&color=%2346bdf4"></a>
 
 ## Features
 
