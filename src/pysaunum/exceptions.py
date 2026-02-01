@@ -1,5 +1,13 @@
 """Exceptions for pysaunum library."""
 
+__all__ = [
+    "SaunumException",
+    "SaunumConnectionError",
+    "SaunumCommunicationError",
+    "SaunumTimeoutError",
+    "SaunumInvalidDataError",
+]
+
 
 class SaunumException(Exception):
     """Base exception for pysaunum library."""

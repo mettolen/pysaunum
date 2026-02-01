@@ -2,6 +2,31 @@
 
 from typing import Final
 
+__all__ = [
+    "DEFAULT_PORT",
+    "DEFAULT_DEVICE_ID",
+    "DEFAULT_TIMEOUT",
+    "MIN_TEMPERATURE",
+    "MAX_TEMPERATURE",
+    "DEFAULT_TEMPERATURE",
+    "MIN_DURATION",
+    "MAX_DURATION",
+    "DEFAULT_DURATION",
+    "MIN_FAN_DURATION",
+    "MAX_FAN_DURATION",
+    "DEFAULT_FAN_DURATION",
+    "MIN_FAN_SPEED",
+    "MAX_FAN_SPEED",
+    "DEFAULT_FAN_SPEED",
+    "FAN_SPEED_OFF",
+    "FAN_SPEED_LOW",
+    "FAN_SPEED_MEDIUM",
+    "FAN_SPEED_HIGH",
+    "SAUNA_TYPE_1",
+    "SAUNA_TYPE_2",
+    "SAUNA_TYPE_3",
+]
+
 # Default connection settings
 DEFAULT_PORT: Final = 502
 DEFAULT_DEVICE_ID: Final = 1

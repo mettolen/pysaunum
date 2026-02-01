@@ -45,6 +45,8 @@ from .exceptions import (
 )
 from .models import SaunumData
 
+__all__ = ["SaunumClient"]
+
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.addHandler(logging.NullHandler())
 
