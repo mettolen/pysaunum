@@ -135,7 +135,7 @@ class SaunumClient:
     @property
     def is_connected(self) -> bool:
         """Return whether the client is connected."""
-        return self._client.connected
+        return bool(self._client.connected)
 
     async def connect(self) -> None:
         """Connect to the sauna controller.

@@ -32,14 +32,25 @@ Thank you for your interest in contributing to pysaunum! This document provides 
    pip install -e ".[dev]"
    ```
 
-4. **Install pre-commit hooks** (optional but recommended):
+4. **Install pre-commit hooks** (recommended):
 
    ```bash
    pip install pre-commit
    pre-commit install
    ```
 
-   This will automatically run linting and formatting checks before each commit.
+   This automatically runs linting, formatting, and type checks before each commit. The following hooks are configured:
+
+   | Hook                   | Purpose                                   |
+   | ---------------------- | ----------------------------------------- |
+   | `trailing-whitespace`  | Removes trailing whitespace               |
+   | `end-of-file-fixer`    | Ensures files end with newline            |
+   | `check-yaml/json/toml` | Validates config file syntax              |
+   | `check-merge-conflict` | Detects merge conflict markers            |
+   | `debug-statements`     | Catches leftover `print()`/`breakpoint()` |
+   | `ruff`                 | Python linter with auto-fix               |
+   | `ruff-format`          | Python code formatter                     |
+   | `mypy`                 | Static type checking (strict mode)        |
 
 5. **Verify the setup**:
 
@@ -113,13 +124,25 @@ Code is automatically formatted with ruff:
 ruff format src/pysaunum tests/
 ```
 
-### 7. Run Pre-commit Checks (Optional)
+### 7. Run Pre-commit Checks
 
-If you installed pre-commit hooks, they'll run automatically. You can also run them manually:
+If you installed pre-commit hooks, they run automatically on `git commit`. You can also run them manually:
 
 ```bash
+# Run on all files
 pre-commit run --all-files
+
+# Run on staged files only
+pre-commit run
+
+# Update hooks to latest versions
+pre-commit autoupdate
+
+# Skip hooks for a single commit (use sparingly)
+git commit --no-verify
 ```
+
+**Note**: Some hooks (like `ruff`) auto-fix issues. If a commit fails, review the changes, re-stage them with `git add`, and commit again.
 
 ### 8. Commit Your Changes
 
