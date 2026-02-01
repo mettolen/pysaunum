@@ -981,7 +981,7 @@ async def test_close_with_coroutine_function(mock_modbus_client: MagicMock) -> N
     """Test close when client.close is a coroutine function."""
     mock_modbus_client.connected = True
 
-    async def async_close_method():
+    async def async_close_method() -> None:
         """Mock async close method."""
 
     mock_modbus_client.close = async_close_method
@@ -1000,7 +1000,7 @@ async def test_close_with_coroutine_no_running_loop(
     """Test close when client.close is a coroutine function and no loop is running."""
     mock_modbus_client.connected = True
 
-    async def async_close_method():
+    async def async_close_method() -> None:
         """Mock async close method."""
 
     mock_modbus_client.close = async_close_method
@@ -1009,7 +1009,7 @@ async def test_close_with_coroutine_no_running_loop(
 
     # Run in a separate thread without event loop
 
-    def run_close():
+    def run_close() -> None:
         """Run close in thread without event loop."""
         client.close()
 

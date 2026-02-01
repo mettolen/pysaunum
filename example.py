@@ -21,7 +21,7 @@ from pysaunum.const import (
 )
 
 
-async def main():
+async def main() -> None:
     """Example main function demonstrating all pysaunum features."""
     # Create client - replace with your sauna controller's IP
     client = SaunumClient(host="192.168.1.100", port=502)
@@ -124,7 +124,7 @@ async def main():
         print("\nDisconnected.")
 
 
-async def main_with_context_manager():
+async def main_with_context_manager() -> None:
     """Example using async context manager (recommended approach)."""
     print("\n" + "=" * 50)
     print("CONTEXT MANAGER EXAMPLE")
@@ -152,7 +152,7 @@ async def main_with_context_manager():
         print(f"Error: {err}")
 
 
-async def demonstrate_constants():
+async def demonstrate_constants() -> None:
     """Demonstrate available constants and their values."""
     print("\n" + "=" * 50)
     print("AVAILABLE CONSTANTS")

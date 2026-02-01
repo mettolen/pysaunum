@@ -37,4 +37,4 @@ repos:
           - pymodbus>=3.11.2
           - pytest>=8.0.0
         args: [--strict, --ignore-missing-imports]
-        files: ^src/
+        files: ^(src|tests)/

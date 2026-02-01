@@ -11,14 +11,14 @@ from pysaunum import (
 )
 
 
-def test_saunum_exception():
+def test_saunum_exception() -> None:
     """Test basic SaunumException."""
     error = SaunumException("Test error")
     assert str(error) == "Test error"
     assert isinstance(error, Exception)
 
 
-def test_saunum_connection_error():
+def test_saunum_connection_error() -> None:
     """Test SaunumConnectionError."""
     error = SaunumConnectionError("Connection failed")
     assert str(error) == "Connection failed"
@@ -26,7 +26,7 @@ def test_saunum_connection_error():
     assert isinstance(error, Exception)
 
 
-def test_saunum_communication_error():
+def test_saunum_communication_error() -> None:
     """Test SaunumCommunicationError."""
     error = SaunumCommunicationError("Communication failed")
     assert str(error) == "Communication failed"
@@ -34,7 +34,7 @@ def test_saunum_communication_error():
     assert isinstance(error, Exception)
 
 
-def test_saunum_timeout_error():
+def test_saunum_timeout_error() -> None:
     """Test SaunumTimeoutError."""
     error = SaunumTimeoutError("Request timed out")
     assert str(error) == "Request timed out"
@@ -42,7 +42,7 @@ def test_saunum_timeout_error():
     assert isinstance(error, Exception)
 
 
-def test_saunum_invalid_data_error():
+def test_saunum_invalid_data_error() -> None:
     """Test SaunumInvalidDataError."""
     error = SaunumInvalidDataError("Invalid data received")
     assert str(error) == "Invalid data received"
@@ -50,7 +50,7 @@ def test_saunum_invalid_data_error():
     assert isinstance(error, Exception)
 
 
-def test_exception_inheritance_chain():
+def test_exception_inheritance_chain() -> None:
     """Test exception inheritance hierarchy."""
     # All custom exceptions should inherit from SaunumException
     exceptions: list[type[SaunumException]] = [
@@ -71,7 +71,7 @@ def test_exception_inheritance_chain():
         assert isinstance(instance, Exception)
 
 
-def test_exception_with_cause():
+def test_exception_with_cause() -> None:
     """Test exceptions with cause chaining."""
     original_error = ValueError("Original error")
 
@@ -83,7 +83,7 @@ def test_exception_with_cause():
         assert isinstance(e.__cause__, ValueError)
 
 
-def test_exception_without_message():
+def test_exception_without_message() -> None:
     """Test exceptions can be raised without message."""
     error = SaunumException()
     assert str(error) == ""
