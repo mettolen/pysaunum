@@ -173,6 +173,8 @@ class SaunumClient:
         if not self._client.connected:
             raise SaunumConnectionError("Not connected to sauna controller")
 
+        _LOGGER.debug("Fetching data from %s:%s", self._host, self._port)
+
         try:
             # Read control parameters (registers 0-6)
             control_result = await self._client.read_holding_registers(
@@ -274,7 +276,7 @@ class SaunumClient:
             )
             alarm_temp_sensor_open = bool(alarm_regs[5]) if alarm_regs[5] >= 0 else None
 
-            return SaunumData(
+            data = SaunumData(
                 session_active=session_active,
                 sauna_type=sauna_type,
                 sauna_duration=sauna_duration,
@@ -294,15 +296,30 @@ class SaunumClient:
                 alarm_temp_sensor_open=alarm_temp_sensor_open,
             )
 
+            _LOGGER.debug(
+                "Data fetched: session=%s, temp=%s°C, target=%s°C, heaters=%s",
+                session_active,
+                current_temp,
+                target_temp,
+                heater_elements_active,
+            )
+
+            return data
+
         except TimeoutError as err:
+            _LOGGER.debug("Timeout fetching data from %s:%s", self._host, self._port)
             raise SaunumTimeoutError(
                 f"Timeout communicating with {self._host}:{self._port}"
             ) from err
         except ModbusException as err:
+            _LOGGER.debug("Modbus error fetching data: %s", err)
             raise SaunumCommunicationError(
                 f"Modbus communication error: {err}"
             ) from err
         except (IndexError, KeyError, ValueError) as err:
+            _LOGGER.debug(
+                "Invalid data received from %s:%s: %s", self._host, self._port, err
+            )
             raise SaunumInvalidDataError(f"Invalid data received: {err}") from err
 
     async def async_start_session(self) -> None:
@@ -312,7 +329,9 @@ class SaunumClient:
             SaunumConnectionError: If not connected
             SaunumCommunicationError: If write operation fails
         """
+        _LOGGER.debug("Starting sauna session")
         await self._async_write_register(REG_SESSION_ACTIVE, 1)
+        _LOGGER.info("Sauna session started")
 
     async def async_stop_session(self) -> None:
         """Stop the sauna session.
@@ -321,7 +340,9 @@ class SaunumClient:
             SaunumConnectionError: If not connected
             SaunumCommunicationError: If write operation fails
         """
+        _LOGGER.debug("Stopping sauna session")
         await self._async_write_register(REG_SESSION_ACTIVE, 0)
+        _LOGGER.info("Sauna session stopped")
 
     async def async_set_target_temperature(self, temperature: int) -> None:
         """Set the target temperature.
@@ -348,7 +369,9 @@ class SaunumClient:
                 f"(0=type defined, {MIN_TEMPERATURE}-{MAX_TEMPERATURE}°C)"
             )
 
+        _LOGGER.debug("Setting target temperature to %d°C", temperature)
         await self._async_write_register(REG_TARGET_TEMPERATURE, temperature)
+        _LOGGER.info("Target temperature set to %d°C", temperature)
 
     async def async_set_sauna_duration(self, minutes: int) -> None:
         """Set the sauna session duration.
@@ -373,7 +396,9 @@ class SaunumClient:
                 f"({MIN_DURATION}-{MAX_DURATION})"
             )
 
+        _LOGGER.debug("Setting sauna duration to %d minutes", minutes)
         await self._async_write_register(REG_SAUNA_DURATION, minutes)
+        _LOGGER.info("Sauna duration set to %d minutes", minutes)
 
     async def async_set_fan_duration(self, minutes: int) -> None:
         """Set the fan duration.
@@ -398,7 +423,9 @@ class SaunumClient:
                 f"({MIN_FAN_DURATION}-{MAX_FAN_DURATION})"
             )
 
+        _LOGGER.debug("Setting fan duration to %d minutes", minutes)
         await self._async_write_register(REG_FAN_DURATION, minutes)
+        _LOGGER.info("Fan duration set to %d minutes", minutes)
 
     async def async_set_fan_speed(self, speed: int) -> None:
         """Set the fan speed.
@@ -420,7 +447,9 @@ class SaunumClient:
                 f"Fan speed {speed} out of range ({MIN_FAN_SPEED}-{MAX_FAN_SPEED})"
             )
 
+        _LOGGER.debug("Setting fan speed to %d", speed)
         await self._async_write_register(REG_FAN_SPEED, speed)
+        _LOGGER.info("Fan speed set to %d", speed)
 
     async def async_set_sauna_type(self, sauna_type: int) -> None:
         """Set the sauna type.
@@ -447,7 +476,9 @@ class SaunumClient:
                 f"Use {SAUNA_TYPE_1}, {SAUNA_TYPE_2}, or {SAUNA_TYPE_3}"
             )
 
+        _LOGGER.debug("Setting sauna type to %d", sauna_type)
         await self._async_write_register(REG_SAUNA_TYPE, sauna_type)
+        _LOGGER.info("Sauna type set to %d", sauna_type)
 
     async def async_set_light_control(self, enabled: bool) -> None:
         """Set light on/off control.
@@ -460,7 +491,9 @@ class SaunumClient:
             SaunumCommunicationError: If write operation fails
         """
         value = STATUS_ON if enabled else STATUS_OFF
+        _LOGGER.debug("Setting light to %s", "on" if enabled else "off")
         await self._async_write_register(REG_LIGHT_CONTROL, value)
+        _LOGGER.info("Light turned %s", "on" if enabled else "off")
 
     async def _async_write_register(self, address: int, value: int) -> None:
         """Write a single holding register.
@@ -476,6 +509,8 @@ class SaunumClient:
         if not self._client.connected:
             raise SaunumConnectionError("Not connected to sauna controller")
 
+        _LOGGER.debug("Writing register %d = %d", address, value)
+
         try:
             result = await self._client.write_register(
                 address=address,
@@ -488,10 +523,12 @@ class SaunumClient:
                 )
 
         except TimeoutError as err:
+            _LOGGER.debug("Timeout writing register %d", address)
             raise SaunumTimeoutError(
                 f"Timeout writing register {address} to {self._host}:{self._port}"
             ) from err
         except ModbusException as err:
+            _LOGGER.debug("Modbus error writing register %d: %s", address, err)
             raise SaunumCommunicationError(
                 f"Modbus error writing register {address}: {err}"
             ) from err
@@ -499,14 +536,16 @@ class SaunumClient:
     async def async_close(self) -> None:
         """Close the connection to the sauna controller asynchronously."""
         if not self._client.connected:
+            _LOGGER.debug("Already disconnected from %s:%s", self._host, self._port)
             return
 
+        _LOGGER.debug("Closing connection to %s:%s", self._host, self._port)
         close_method = self._client.close  # Capture to avoid pylint no-return warning
         result = cast(Any, close_method())
         if inspect.isawaitable(result):
             await result
 
-        _LOGGER.info("Closed connection to %s:%s", self._host, self._port)
+        _LOGGER.info("Disconnected from %s:%s", self._host, self._port)
 
     async def __aenter__(self) -> SaunumClient:
         """Async context manager entry."""
@@ -542,8 +581,10 @@ class SaunumClient:
         """
 
         if not self._client.connected:
+            _LOGGER.debug("Already disconnected from %s:%s", self._host, self._port)
             return
 
+        _LOGGER.debug("Closing connection to %s:%s", self._host, self._port)
         close_method = self._client.close
         if inspect.iscoroutinefunction(close_method):
             close_coro = close_method()  # pylint: disable=assignment-from-no-return
@@ -556,4 +597,4 @@ class SaunumClient:
         else:
             close_method()
 
-        _LOGGER.info("Closed connection to %s:%s", self._host, self._port)
+        _LOGGER.info("Disconnected from %s:%s", self._host, self._port)
