@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-02-08
+
+### Added
+
+- Debug and info logging for all client operations (connect, data fetch, write commands, close)
+- `__all__` exports to `client.py`, `const.py`, `exceptions.py`, and `models.py` for explicit public API
+- Dependabot configuration for automated pip and GitHub Actions dependency updates
+- GitHub Copilot instructions (`.github/copilot-instructions.md`)
+- Codespell pre-commit hook for spell checking
+- Package build and twine check steps in CI workflow
+- Codecov test results upload in CI
+- Coverage threshold enforcement (`--cov-fail-under=95`) in CI
+
+### Changed
+
+- Disconnect log message changed from "Closed connection" to "Disconnected from" for clarity
+- `is_connected` property now returns `bool` explicitly via `bool()` cast
+- CI actions updated: `actions/checkout` v4 → v6, `actions/setup-python` v5 → v6, `codecov/codecov-action` v4 → v5
+- Ruff and mypy now lint and type-check the entire project (including `tests/`) instead of only `src/`
+- Pre-commit mypy hook includes `pytest` as additional dependency and runs on `tests/` directory
+- Removed `poetry-check` pre-commit hook
+- `pyproject.toml`: added `tool.setuptools` include-package-data, mypy overrides for tests, and codespell config
+
+### Improved
+
+- README.md updated with CI, coverage, PyPI, Python version, and license badges
+- README.md updated with dynamic Home Assistant installation count and quality scale badges
+- CONTRIBUTING.md expanded with pre-commit hook details table and additional usage instructions
+
 ## [0.3.0] - 2026-01-13
 
 ### Added
@@ -92,7 +121,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - pymodbus >= 3.11.2
 
-[Unreleased]: https://github.com/mettolen/pysaunum/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/mettolen/pysaunum/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/mettolen/pysaunum/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/mettolen/pysaunum/releases/tag/v0.3.0
 [0.2.0]: https://github.com/mettolen/pysaunum/releases/tag/v0.2.0
 [0.1.0]: https://github.com/mettolen/pysaunum/releases/tag/v0.1.0
