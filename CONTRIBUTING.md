@@ -6,7 +6,7 @@ Thank you for your interest in contributing to pysaunum! This document provides 
 
 ### Prerequisites
 
-- Python 3.11 or higher
+- Python 3.12 or higher
 - Git
 - A Saunum sauna controller for testing (optional but recommended)
 

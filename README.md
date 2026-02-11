@@ -277,7 +277,7 @@ The library maintains **100% test coverage** with comprehensive tests including:
 
 ## Requirements
 
-- Python 3.11+
+- Python 3.12+
 - Dependencies:
   - `pymodbus` >= 3.0.0 (Modbus TCP communication)
   - `asyncio` (built-in, async/await support)
@@ -289,7 +289,7 @@ This library is tested and compatible with:
 - Saunum sauna controllers with Modbus TCP interface
   - Tested with control panel v1.1.24 and power unit v1.1.43
 - Home Assistant integration
-- Python 3.11, 3.12, 3.13+
+- Python 3.12, 3.13+
 
 ## Advanced Usage
 
