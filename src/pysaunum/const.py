@@ -1,5 +1,6 @@
 """Constants for Saunum sauna controllers."""
 
+from enum import IntEnum
 from typing import Final
 
 __all__ = [
@@ -18,13 +19,8 @@ __all__ = [
     "MIN_FAN_SPEED",
     "MAX_FAN_SPEED",
     "DEFAULT_FAN_SPEED",
-    "FAN_SPEED_OFF",
-    "FAN_SPEED_LOW",
-    "FAN_SPEED_MEDIUM",
-    "FAN_SPEED_HIGH",
-    "SAUNA_TYPE_1",
-    "SAUNA_TYPE_2",
-    "SAUNA_TYPE_3",
+    "FanSpeed",
+    "SaunaType",
 ]
 
 # Default connection settings
@@ -73,16 +69,25 @@ MIN_FAN_SPEED: Final = 0  # Minimum fan speed (Off)
 MAX_FAN_SPEED: Final = 3  # Maximum fan speed (High)
 DEFAULT_FAN_SPEED: Final = 2  # Default fan speed (Medium)
 
+
 # Fan speed levels
-FAN_SPEED_OFF: Final = 0  # Fan off
-FAN_SPEED_LOW: Final = 1  # Low speed
-FAN_SPEED_MEDIUM: Final = 2  # Medium speed
-FAN_SPEED_HIGH: Final = 3  # High speed
+class FanSpeed(IntEnum):
+    """Fan speed settings."""
+
+    OFF = 0
+    LOW = 1
+    MEDIUM = 2
+    HIGH = 3
+
 
 # Sauna types
-SAUNA_TYPE_1: Final = 0  # Sauna type 1
-SAUNA_TYPE_2: Final = 1  # Sauna type 2
-SAUNA_TYPE_3: Final = 2  # Sauna type 3
+class SaunaType(IntEnum):
+    """Sauna type settings."""
+
+    TYPE_1 = 0
+    TYPE_2 = 1
+    TYPE_3 = 2
+
 
 # Status values
 STATUS_OFF: Final = 0

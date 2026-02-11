@@ -69,8 +69,8 @@ async def main():
     except SaunumConnectionError as err:
         print(f"Connection error: {err}")
     finally:
-        # Close connection (synchronous method)
-        client.close()
+        # Close connection
+        await client.async_close()
 
 asyncio.run(main())
 ```
@@ -98,8 +98,8 @@ async def main():
     except SaunumConnectionError as err:
         print(f"Connection error: {err}")
     finally:
-        # Close connection (synchronous method)
-        client.close()
+        # Close connection
+        await client.async_close()
 
 asyncio.run(main())
 ```
@@ -109,16 +109,16 @@ asyncio.run(main())
 ```python
 import asyncio
 from pysaunum import SaunumClient
-from pysaunum.const import FAN_SPEED_HIGH, SAUNA_TYPE_2
+from pysaunum.const import FanSpeed, SaunaType
 
 async def main():
     try:
         # Using async context manager automatically handles connection cleanup
         async with SaunumClient(host="192.168.1.100") as client:
             # Configure sauna
-            await client.async_set_sauna_type(SAUNA_TYPE_2)  # Type 2 sauna
+            await client.async_set_sauna_type(SaunaType.TYPE_2)  # Type 2 sauna
             await client.async_set_target_temperature(85)
-            await client.async_set_fan_speed(FAN_SPEED_HIGH)
+            await client.async_set_fan_speed(FanSpeed.HIGH)
 
             # Start session
             await client.async_start_session()
@@ -138,16 +138,11 @@ asyncio.run(main())
 
 ```python
 from pysaunum.const import (
-    # Fan speed constants
-    FAN_SPEED_OFF,      # 0 - Fan off
-    FAN_SPEED_LOW,      # 1 - Low speed
-    FAN_SPEED_MEDIUM,   # 2 - Medium speed
-    FAN_SPEED_HIGH,     # 3 - High speed
+    # Fan speed enum (IntEnum)
+    FanSpeed,           # FanSpeed.OFF=0, LOW=1, MEDIUM=2, HIGH=3
 
-    # Sauna type constants (0-indexed)
-    SAUNA_TYPE_1,       # 0 - Type 1 sauna
-    SAUNA_TYPE_2,       # 1 - Type 2 sauna
-    SAUNA_TYPE_3,       # 2 - Type 3 sauna
+    # Sauna type enum (IntEnum, 0-indexed)
+    SaunaType,          # SaunaType.TYPE_1=0, TYPE_2=1, TYPE_3=2
 
     # Limits
     MIN_TEMPERATURE,    # 40°C
@@ -158,6 +153,15 @@ from pysaunum.const import (
     MIN_FAN_DURATION,   # 0 minutes
     MAX_FAN_DURATION,   # 30 minutes
 )
+
+# Fan speed values are IntEnum members
+assert FanSpeed.OFF == 0
+assert FanSpeed.HIGH == 3
+assert 2 in FanSpeed  # Membership testing
+
+# Sauna type values are IntEnum members
+assert SaunaType.TYPE_1 == 0
+assert SaunaType.TYPE_3 == 2
 ```
 
 ## API Reference
@@ -179,7 +183,7 @@ from pysaunum.const import (
 ### Data Model (SaunumData)
 
 ```python
-@dataclass
+@dataclass(frozen=True)
 class SaunumData:
     # Session control
     session_active: bool                   # Session status

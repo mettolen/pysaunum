@@ -3,7 +3,6 @@
 
 import asyncio
 import threading
-from collections.abc import Iterator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -24,38 +23,23 @@ from pysaunum.const import (
 )
 
 
-@pytest.fixture
-def mock_modbus_client() -> Iterator[MagicMock]:
-    """Mock the AsyncModbusTcpClient."""
-    with patch("pysaunum.client.AsyncModbusTcpClient") as mock_client:
-        # Set up the mock client instance
-        mock_instance = MagicMock()
-        mock_client.return_value = mock_instance
-
-        # Configure the connected property
-        mock_instance.connected = False
-
-        # Mock successful connection
-        mock_instance.connect = AsyncMock(return_value=None)
-        mock_instance.close = MagicMock(return_value=None)
-
-        # Mock successful read operations
-        mock_instance.read_holding_registers = AsyncMock()
-
-        # Mock successful write operation
-        mock_write_result = MagicMock()
-        mock_write_result.isError.return_value = False
-        mock_instance.write_register = AsyncMock(return_value=mock_write_result)
-
-        yield mock_instance
-
-
 @pytest.mark.asyncio
 async def test_client_init() -> None:
     """Test client initialization."""
     client = SaunumClient(host="192.168.1.100")
     assert client.host == "192.168.1.100"
+    assert client.port == 502
+    assert client.device_id == 1
     assert not client.is_connected
+
+
+@pytest.mark.asyncio
+async def test_client_init_custom_params() -> None:
+    """Test client initialization with custom parameters."""
+    client = SaunumClient(host="10.0.0.1", port=5020, device_id=3, timeout=5)
+    assert client.host == "10.0.0.1"
+    assert client.port == 5020
+    assert client.device_id == 3
 
 
 @pytest.mark.asyncio
@@ -1016,3 +1000,63 @@ async def test_close_with_coroutine_no_running_loop(
     thread = threading.Thread(target=run_close)
     thread.start()
     thread.join(timeout=1.0)
+
+
+@pytest.mark.asyncio
+async def test_create_factory_method_success(mock_modbus_client: MagicMock) -> None:
+    """Test factory method creates and connects client."""
+    mock_modbus_client.connected = True
+
+    client = await SaunumClient.create("192.168.1.100")
+
+    assert client.host == "192.168.1.100"
+    assert client.is_connected
+    mock_modbus_client.connect.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_create_factory_method_connection_failure(
+    mock_modbus_client: MagicMock,
+) -> None:
+    """Test factory method raises error on connection failure."""
+    mock_modbus_client.connected = False
+
+    with pytest.raises(SaunumConnectionError, match="Failed to connect"):
+        await SaunumClient.create("192.168.1.100")
+
+
+@pytest.mark.asyncio
+async def test_create_factory_method_with_custom_params(
+    mock_modbus_client: MagicMock,
+) -> None:
+    """Test factory method with custom parameters."""
+    mock_modbus_client.connected = True
+
+    client = await SaunumClient.create(
+        host="192.168.1.50",
+        port=5020,
+        device_id=2,
+        timeout=5,
+    )
+
+    assert client.host == "192.168.1.50"
+
+
+@pytest.mark.asyncio
+async def test_create_factory_method_oserror(mock_modbus_client: MagicMock) -> None:
+    """Test factory method handles OSError."""
+    mock_modbus_client.connect.side_effect = OSError("Network unreachable")
+
+    with pytest.raises(SaunumConnectionError, match="Failed to connect"):
+        await SaunumClient.create("192.168.1.100")
+
+
+@pytest.mark.asyncio
+async def test_create_factory_method_modbus_exception(
+    mock_modbus_client: MagicMock,
+) -> None:
+    """Test factory method handles ModbusException."""
+    mock_modbus_client.connect.side_effect = ModbusException("Modbus error")
+
+    with pytest.raises(SaunumConnectionError, match="Failed to connect"):
+        await SaunumClient.create("192.168.1.100")

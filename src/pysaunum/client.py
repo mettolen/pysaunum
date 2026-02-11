@@ -16,11 +16,9 @@ from .const import (
     DEFAULT_TIMEOUT,
     MAX_DURATION,
     MAX_FAN_DURATION,
-    MAX_FAN_SPEED,
     MAX_TEMPERATURE,
     MIN_DURATION,
     MIN_FAN_DURATION,
-    MIN_FAN_SPEED,
     MIN_TEMPERATURE,
     REG_ALARM_DOOR_OPEN,
     REG_CURRENT_TEMP,
@@ -31,11 +29,10 @@ from .const import (
     REG_SAUNA_TYPE,
     REG_SESSION_ACTIVE,
     REG_TARGET_TEMPERATURE,
-    SAUNA_TYPE_1,
-    SAUNA_TYPE_2,
-    SAUNA_TYPE_3,
     STATUS_OFF,
     STATUS_ON,
+    FanSpeed,
+    SaunaType,
 )
 from .exceptions import (
     SaunumCommunicationError,
@@ -135,6 +132,16 @@ class SaunumClient:
         return self._host
 
     @property
+    def port(self) -> int:
+        """Return the Modbus TCP port."""
+        return self._port
+
+    @property
+    def device_id(self) -> int:
+        """Return the Modbus device/unit ID."""
+        return self._device_id
+
+    @property
     def is_connected(self) -> bool:
         """Return whether the client is connected."""
         return bool(self._client.connected)
@@ -232,7 +239,7 @@ class SaunumClient:
                 )
 
             fan_speed_raw = control_regs[5]
-            if 0 <= fan_speed_raw <= 3:
+            if fan_speed_raw in FanSpeed:
                 fan_speed = fan_speed_raw
             else:
                 _LOGGER.debug(
@@ -417,7 +424,7 @@ class SaunumClient:
             Setting fan duration to 0 tells the controller to use the default
             fan duration defined for the currently selected sauna type.
         """
-        if minutes < 0 or minutes > MAX_FAN_DURATION:
+        if not MIN_FAN_DURATION <= minutes <= MAX_FAN_DURATION:
             raise ValueError(
                 f"Fan duration {minutes} minutes out of range "
                 f"({MIN_FAN_DURATION}-{MAX_FAN_DURATION})"
@@ -442,9 +449,9 @@ class SaunumClient:
             SaunumConnectionError: If not connected
             SaunumCommunicationError: If write operation fails
         """
-        if not MIN_FAN_SPEED <= speed <= MAX_FAN_SPEED:
+        if speed not in FanSpeed:
             raise ValueError(
-                f"Fan speed {speed} out of range ({MIN_FAN_SPEED}-{MAX_FAN_SPEED})"
+                f"Fan speed {speed} out of range ({FanSpeed.OFF}-{FanSpeed.HIGH})"
             )
 
         _LOGGER.debug("Setting fan speed to %d", speed)
@@ -470,10 +477,10 @@ class SaunumClient:
             duration, and fan settings. Refer to your controller's manual for
             specific type configurations.
         """
-        if sauna_type not in (SAUNA_TYPE_1, SAUNA_TYPE_2, SAUNA_TYPE_3):
+        if sauna_type not in SaunaType:
             raise ValueError(
                 f"Sauna type {sauna_type} invalid. "
-                f"Use {SAUNA_TYPE_1}, {SAUNA_TYPE_2}, or {SAUNA_TYPE_3}"
+                f"Use {SaunaType.TYPE_1}, {SaunaType.TYPE_2}, or {SaunaType.TYPE_3}"
             )
 
         _LOGGER.debug("Setting sauna type to %d", sauna_type)

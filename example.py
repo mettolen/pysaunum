@@ -5,19 +5,14 @@ import asyncio
 from pysaunum import SaunumClient, SaunumCommunicationError, SaunumConnectionError
 from pysaunum.const import (
     DEFAULT_DURATION,
-    FAN_SPEED_HIGH,
-    FAN_SPEED_LOW,
-    FAN_SPEED_MEDIUM,
-    FAN_SPEED_OFF,
     MAX_DURATION,
     MAX_FAN_DURATION,
     MAX_TEMPERATURE,
     MIN_DURATION,
     MIN_FAN_DURATION,
     MIN_TEMPERATURE,
-    SAUNA_TYPE_1,
-    SAUNA_TYPE_2,
-    SAUNA_TYPE_3,
+    FanSpeed,
+    SaunaType,
 )
 
 
@@ -52,8 +47,8 @@ async def main() -> None:
         print("\nConfiguring sauna settings...")
 
         # Set sauna type (0=Type 1, 1=Type 2, 2=Type 3)
-        print(f"Setting sauna type to Type 2 (value {SAUNA_TYPE_2})...")
-        await client.async_set_sauna_type(SAUNA_TYPE_2)
+        print(f"Setting sauna type to Type 2 (value {SaunaType.TYPE_2})...")
+        await client.async_set_sauna_type(SaunaType.TYPE_2)
 
         # Set target temperature (0 to turn off, or 40-100°C)
         print("Setting target temperature to 85°C...")
@@ -64,8 +59,8 @@ async def main() -> None:
         await client.async_set_sauna_duration(DEFAULT_DURATION)
 
         # Set fan speed (0=Off, 1=Low, 2=Medium, 3=High)
-        print(f"Setting fan speed to Medium (value {FAN_SPEED_MEDIUM})...")
-        await client.async_set_fan_speed(FAN_SPEED_MEDIUM)
+        print(f"Setting fan speed to Medium (value {FanSpeed.MEDIUM})...")
+        await client.async_set_fan_speed(FanSpeed.MEDIUM)
 
         # Set fan duration (0-30 minutes, 0=continuous)
         print("Setting fan duration to 15 minutes...")
@@ -91,10 +86,10 @@ async def main() -> None:
         # Demonstrate fan speed control
         print("\nDemonstrating fan speed control...")
         for speed, name in [
-            (FAN_SPEED_OFF, "Off"),
-            (FAN_SPEED_LOW, "Low"),
-            (FAN_SPEED_HIGH, "High"),
-            (FAN_SPEED_OFF, "Off"),
+            (FanSpeed.OFF, "Off"),
+            (FanSpeed.LOW, "Low"),
+            (FanSpeed.HIGH, "High"),
+            (FanSpeed.OFF, "Off"),
         ]:
             print(f"Setting fan to {name}...")
             await client.async_set_fan_speed(speed)
@@ -119,8 +114,8 @@ async def main() -> None:
     except SaunumCommunicationError as err:
         print(f"Communication error: {err}")
     finally:
-        # Close the connection (now synchronous)
-        client.close()
+        # Close the connection
+        await client.async_close()
         print("\nDisconnected.")
 
 
@@ -159,15 +154,15 @@ async def demonstrate_constants() -> None:
     print("=" * 50)
 
     print("Fan Speed Constants:")
-    print(f"  FAN_SPEED_OFF = {FAN_SPEED_OFF}")
-    print(f"  FAN_SPEED_LOW = {FAN_SPEED_LOW}")
-    print(f"  FAN_SPEED_MEDIUM = {FAN_SPEED_MEDIUM}")
-    print(f"  FAN_SPEED_HIGH = {FAN_SPEED_HIGH}")
+    print(f"  FanSpeed.OFF = {FanSpeed.OFF}")
+    print(f"  FanSpeed.LOW = {FanSpeed.LOW}")
+    print(f"  FanSpeed.MEDIUM = {FanSpeed.MEDIUM}")
+    print(f"  FanSpeed.HIGH = {FanSpeed.HIGH}")
 
     print("\nSauna Type Constants (0-indexed):")
-    print(f"  SAUNA_TYPE_1 = {SAUNA_TYPE_1}")
-    print(f"  SAUNA_TYPE_2 = {SAUNA_TYPE_2}")
-    print(f"  SAUNA_TYPE_3 = {SAUNA_TYPE_3}")
+    print(f"  SaunaType.TYPE_1 = {SaunaType.TYPE_1}")
+    print(f"  SaunaType.TYPE_2 = {SaunaType.TYPE_2}")
+    print(f"  SaunaType.TYPE_3 = {SaunaType.TYPE_3}")
 
     print("\nTemperature Limits:")
     print(f"  MIN_TEMPERATURE = {MIN_TEMPERATURE}°C")

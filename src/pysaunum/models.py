@@ -5,7 +5,7 @@ from dataclasses import dataclass
 __all__ = ["SaunumData"]
 
 
-@dataclass
+@dataclass(frozen=True)
 class SaunumData:
     """Data from Saunum sauna controller.
 
