@@ -349,7 +349,7 @@ except SaunumConnectionError as err:
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
@@ -361,15 +361,3 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for det
 - Reporting bugs and requesting features
 
 For major changes, please open an issue first to discuss what you would like to change.
-
-## Credits
-
-This library is designed to work with [Saunum](https://saunum.com/) sauna controllers and is used by the [Home Assistant Saunum integration](https://www.home-assistant.io/integrations/saunum/).
-
-**Key Features Developed:**
-
-- Complete Modbus TCP implementation for Saunum controllers
-- Comprehensive error handling and recovery
-- Type-safe API with full asyncio support
-- 100% test coverage with extensive validation
-- Production-ready reliability and performance

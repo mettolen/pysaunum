@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-02-11
+
+### Breaking Changes
+
+- Replaced `FAN_SPEED_OFF`, `FAN_SPEED_LOW`, `FAN_SPEED_MEDIUM`, `FAN_SPEED_HIGH` constants with `FanSpeed` IntEnum
+- Replaced `SAUNA_TYPE_1`, `SAUNA_TYPE_2`, `SAUNA_TYPE_3` constants with `SaunaType` IntEnum
+- `SaunumData` dataclass is now frozen (immutable)
+- Removed deprecated constants from public API exports in `__init__.py`
+
+### Added
+
+- `FanSpeed` IntEnum (`OFF`, `LOW`, `MEDIUM`, `HIGH`) for type-safe fan speed control
+- `SaunaType` IntEnum (`TYPE_1`, `TYPE_2`, `TYPE_3`) for type-safe sauna type selection
+- `port` property to `SaunumClient` to expose the Modbus TCP port
+- `device_id` property to `SaunumClient` to expose the Modbus device/unit ID
+
+### Changed
+
+- **Minimum Python version raised from 3.11 to 3.12**
+- Fan speed validation now uses `in FanSpeed` enum membership instead of range checks
+- Sauna type validation now uses `in SaunaType` enum membership instead of tuple comparison
+- Fan duration validation now uses chained comparison (`MIN_FAN_DURATION <= minutes <= MAX_FAN_DURATION`)
+
+### Improved
+
+- Updated README examples to use `FanSpeed` and `SaunaType` enums
+- Updated README to use `async_close()` instead of `close()` for connection cleanup
+- Updated `example.py` to use new enum-based constants
+
+### Developer Experience
+
+- Extracted shared test fixtures into `tests/conftest.py`
+- Consolidated factory method tests from `tests/test_improvements.py` into `tests/test_client.py`
+- Removed `tests/test_improvements.py`
+
 ## [0.4.0] - 2026-02-08
 
 ### Added
@@ -121,7 +156,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - pymodbus >= 3.11.2
 
-[Unreleased]: https://github.com/mettolen/pysaunum/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/mettolen/pysaunum/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/mettolen/pysaunum/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/mettolen/pysaunum/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/mettolen/pysaunum/releases/tag/v0.3.0
 [0.2.0]: https://github.com/mettolen/pysaunum/releases/tag/v0.2.0
