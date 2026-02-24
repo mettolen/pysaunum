@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 
+from .const import FanSpeed, SaunaType
+
 __all__ = ["SaunumData"]
 
 
@@ -17,8 +19,8 @@ class SaunumData:
     session_active: bool
     """Whether a sauna session is currently active."""
 
-    sauna_type: int
-    """Sauna type (0, 1, or 2)."""
+    sauna_type: SaunaType | int
+    """Sauna type. A SaunaType enum member for known types, or raw int for unknown."""
 
     sauna_duration: int | None
     """Session duration in minutes (0-720), or None if not set."""
@@ -29,8 +31,8 @@ class SaunumData:
     target_temperature: int | None
     """Target temperature in Celsius (40-100), or None if not set."""
 
-    fan_speed: int | None
-    """Fan speed (0=Off, 1=Low, 2=Medium, 3=High), or None if not available."""
+    fan_speed: FanSpeed | None
+    """Fan speed enum member, or None if the raw value was unrecognized."""
 
     light_on: bool
     """Whether the light is on."""
@@ -42,8 +44,8 @@ class SaunumData:
     on_time: int
     """Device total on time in seconds since last reset."""
 
-    heater_elements_active: int | None
-    """Number of heater elements currently active (0-3), or None if not available."""
+    heater_elements_active: int
+    """Number of heater elements currently active."""
 
     door_open: bool
     """Whether the door is open."""

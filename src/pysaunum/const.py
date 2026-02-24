@@ -41,7 +41,7 @@ REG_LIGHT_CONTROL: Final = 6  # Light on/off control (0=Off, 1=On)
 REG_CURRENT_TEMP: Final = 100  # Current temperature in °C
 REG_ON_TIME_HIGH: Final = 101  # On time high 16-bits (seconds)
 REG_ON_TIME_LOW: Final = 102  # On time low 16-bits (seconds)
-REG_HEATER_STATUS: Final = 103  # Number of heater elements active (0-3)
+REG_HEATER_STATUS: Final = 103  # Number of heater elements active
 REG_DOOR_STATUS: Final = 104  # Door status (open/closed)
 
 # Modbus register addresses - Alarm Status (Read-Only)

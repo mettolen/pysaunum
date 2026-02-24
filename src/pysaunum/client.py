@@ -215,7 +215,12 @@ class SaunumClient:
 
             # Parse control parameters
             session_active = bool(control_regs[0])
-            sauna_type = control_regs[1]
+            sauna_type_raw = control_regs[1]
+            sauna_type: SaunaType | int = (
+                SaunaType(sauna_type_raw)
+                if sauna_type_raw in SaunaType
+                else sauna_type_raw
+            )
             sauna_duration = control_regs[2] if control_regs[2] > 0 else None
             fan_duration = control_regs[3] if control_regs[3] > 0 else None
 
@@ -239,8 +244,9 @@ class SaunumClient:
                 )
 
             fan_speed_raw = control_regs[5]
+            fan_speed: FanSpeed | None
             if fan_speed_raw in FanSpeed:
-                fan_speed = fan_speed_raw
+                fan_speed = FanSpeed(fan_speed_raw)
             else:
                 _LOGGER.debug(
                     "Invalid fan speed %d received (expected 0-3)", fan_speed_raw
@@ -254,15 +260,7 @@ class SaunumClient:
             # Combine 32-bit on time from two 16-bit registers
             on_time = (status_regs[1] << 16) | status_regs[2]
 
-            heater_elements_raw = status_regs[3]
-            if 0 <= heater_elements_raw <= 3:
-                heater_elements_active = heater_elements_raw
-            else:
-                _LOGGER.debug(
-                    "Invalid heater elements count %d received (expected 0-3)",
-                    heater_elements_raw,
-                )
-                heater_elements_active = None
+            heater_elements_active = status_regs[3]
             door_open = bool(status_regs[4])
 
             # Parse alarm status

@@ -810,7 +810,7 @@ async def test_get_data_heater_elements_count(mock_modbus_client: MagicMock) -> 
 
     client = SaunumClient(host="192.168.1.100")
 
-    # Test different heater element counts (0-3)
+    # Test different heater element counts
     for count in [0, 1, 2, 3]:
         status_response = MagicMock()
         status_response.isError.return_value = False
@@ -826,19 +826,19 @@ async def test_get_data_heater_elements_count(mock_modbus_client: MagicMock) -> 
         data = await client.async_get_data()
         assert data.heater_elements_active == count
 
-    # Test invalid heater element count (>3) - should return None
-    status_response_invalid = MagicMock()
-    status_response_invalid.isError.return_value = False
-    status_response_invalid.registers = [70, 0, 0, 5, 0]  # invalid count
+    # Test heater element count outside typical range - raw value passed through
+    status_response_other = MagicMock()
+    status_response_other.isError.return_value = False
+    status_response_other.registers = [70, 0, 0, 5, 0]
 
     mock_modbus_client.read_holding_registers.side_effect = [
         control_response,
-        status_response_invalid,
+        status_response_other,
         alarm_response,
     ]
 
     data = await client.async_get_data()
-    assert data.heater_elements_active is None
+    assert data.heater_elements_active == 5
 
 
 @pytest.mark.asyncio

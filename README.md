@@ -187,26 +187,26 @@ assert SaunaType.TYPE_3 == 2
 class SaunumData:
     # Session control
     session_active: bool                   # Session status
-    sauna_type: int | None                 # Sauna type (0-2)
+    sauna_type: SaunaType | int             # Sauna type enum (or raw int)
     sauna_duration: int | None             # Duration in minutes
     fan_duration: int | None               # Fan duration in minutes
     target_temperature: int | None         # Target temp in °C
-    fan_speed: int | None                  # Fan speed (0-3)
-    light_on: bool | None                  # Light status
+    fan_speed: FanSpeed | None             # Fan speed enum
+    light_on: bool                         # Light status
 
     # Status sensors
-    current_temperature: float | None      # Current temp in °C
-    on_time: int | None                    # Device uptime in seconds
-    heater_elements_active: int | None     # Active heater elements (0-3)
-    door_open: bool | None                 # Door status
+    current_temperature: float             # Current temp in °C
+    on_time: int                           # Device uptime in seconds
+    heater_elements_active: int            # Active heater elements
+    door_open: bool                        # Door status
 
     # Alarm status
-    alarm_door_open: bool | None           # Door alarm during heating
-    alarm_door_sensor: bool | None         # Door open too long
-    alarm_thermal_cutoff: bool | None      # Thermal protection
-    alarm_internal_temp: bool | None       # Overheating alarm
-    alarm_temp_sensor_short: bool | None   # Sensor short circuit
-    alarm_temp_sensor_open: bool | None    # Sensor disconnected
+    alarm_door_open: bool                  # Door alarm during heating
+    alarm_door_sensor: bool                # Door open too long
+    alarm_thermal_cutoff: bool             # Thermal protection
+    alarm_internal_temp: bool              # Overheating alarm
+    alarm_temp_sensor_short: bool          # Sensor short circuit
+    alarm_temp_sensor_open: bool           # Sensor disconnected
 ```
 
 ### Exception Handling
