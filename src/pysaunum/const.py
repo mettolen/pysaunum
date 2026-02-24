@@ -1,5 +1,7 @@
 """Constants for Saunum sauna controllers."""
 
+from __future__ import annotations
+
 from enum import IntEnum
 from typing import Final
 

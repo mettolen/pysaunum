@@ -1,5 +1,7 @@
 """Data models for Saunum sauna controller."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 from .const import FanSpeed, SaunaType
@@ -22,14 +24,14 @@ class SaunumData:
     sauna_type: SaunaType | int
     """Sauna type. A SaunaType enum member for known types, or raw int for unknown."""
 
-    sauna_duration: int | None
-    """Session duration in minutes (0-720), or None if not set."""
+    sauna_duration: int
+    """Session duration in minutes (1-720), or 0 for sauna type default."""
 
-    fan_duration: int | None
-    """Fan duration in minutes (0-30), or None if not set."""
+    fan_duration: int
+    """Fan duration in minutes (1-30), or 0 for sauna type default."""
 
-    target_temperature: int | None
-    """Target temperature in Celsius (40-100), or None if not set."""
+    target_temperature: int
+    """Target temperature in Celsius (40-100), or 0 for sauna type default."""
 
     fan_speed: FanSpeed | None
     """Fan speed enum member, or None if the raw value was unrecognized."""

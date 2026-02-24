@@ -188,9 +188,9 @@ class SaunumData:
     # Session control
     session_active: bool                   # Session status
     sauna_type: SaunaType | int             # Sauna type enum (or raw int)
-    sauna_duration: int | None             # Duration in minutes
-    fan_duration: int | None               # Fan duration in minutes
-    target_temperature: int | None         # Target temp in °C
+    sauna_duration: int                    # Duration in minutes (0=type default)
+    fan_duration: int                      # Fan duration in minutes (0=type default)
+    target_temperature: int                # Target temp in °C (0=type default)
     fan_speed: FanSpeed | None             # Fan speed enum
     light_on: bool                         # Light status
 

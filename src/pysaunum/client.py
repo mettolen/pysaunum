@@ -45,7 +45,6 @@ from .models import SaunumData
 __all__ = ["SaunumClient"]
 
 _LOGGER = logging.getLogger(__name__)
-_LOGGER.addHandler(logging.NullHandler())
 
 _UINT16_MAX = 0x10000
 _INT16_SIGN_BIT = 0x8000
@@ -221,25 +220,15 @@ class SaunumClient:
                 if sauna_type_raw in SaunaType
                 else sauna_type_raw
             )
-            sauna_duration = control_regs[2] if control_regs[2] > 0 else None
-            fan_duration = control_regs[3] if control_regs[3] > 0 else None
+            sauna_duration = control_regs[2]
+            fan_duration = control_regs[3]
 
             # Validate target temperature
-            target_temp_raw = control_regs[4]
-            target_temp: int | None = None
-            if target_temp_raw >= MIN_TEMPERATURE:
-                if target_temp_raw > MAX_TEMPERATURE:
-                    _LOGGER.warning(
-                        "Target temperature %d°C exceeds maximum %d°C",
-                        target_temp_raw,
-                        MAX_TEMPERATURE,
-                    )
-                target_temp = target_temp_raw
-            elif target_temp_raw != 0:
-                _LOGGER.debug(
-                    "Invalid target temperature %d received (expected 0 or %d-%d)",
-                    target_temp_raw,
-                    MIN_TEMPERATURE,
+            target_temp = control_regs[4]
+            if target_temp > MAX_TEMPERATURE:
+                _LOGGER.warning(
+                    "Target temperature %d°C exceeds maximum %d°C",
+                    target_temp,
                     MAX_TEMPERATURE,
                 )
 

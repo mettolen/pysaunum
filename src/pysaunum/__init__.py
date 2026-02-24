@@ -1,5 +1,8 @@
 """Python library for controlling Saunum sauna controllers."""
 
+from __future__ import annotations
+
+import logging
 from importlib.metadata import version
 
 from .client import SaunumClient
@@ -31,6 +34,8 @@ from .exceptions import (
 from .models import SaunumData
 
 __version__ = version("pysaunum")
+
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = [
     "SaunumClient",

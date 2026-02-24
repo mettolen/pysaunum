@@ -1,5 +1,7 @@
 """Exceptions for pysaunum library."""
 
+from __future__ import annotations
+
 __all__ = [
     "SaunumException",
     "SaunumConnectionError",

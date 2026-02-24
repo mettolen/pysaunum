@@ -480,8 +480,8 @@ async def test_get_data_low_target_temperature(mock_modbus_client: MagicMock) ->
     client = SaunumClient(host="192.168.1.100")
     data = await client.async_get_data()
 
-    # Should not set target temperature for values below minimum
-    assert data.target_temperature is None
+    # Raw value is passed through even if below the valid 40-100 range
+    assert data.target_temperature == 30
 
 
 @pytest.mark.asyncio
