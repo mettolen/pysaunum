@@ -4,6 +4,9 @@ from importlib.metadata import version
 
 from .client import SaunumClient
 from .const import (
+    DEFAULT_DURATION,
+    DEFAULT_FAN_DURATION,
+    DEFAULT_FAN_SPEED,
     DEFAULT_PORT,
     DEFAULT_TEMPERATURE,
     DEFAULT_TIMEOUT,
@@ -37,6 +40,9 @@ __all__ = [
     "SaunumCommunicationError",
     "SaunumTimeoutError",
     "SaunumInvalidDataError",
+    "DEFAULT_DURATION",
+    "DEFAULT_FAN_DURATION",
+    "DEFAULT_FAN_SPEED",
     "DEFAULT_PORT",
     "DEFAULT_TEMPERATURE",
     "DEFAULT_TIMEOUT",
