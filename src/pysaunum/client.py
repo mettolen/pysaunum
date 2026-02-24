@@ -215,7 +215,7 @@ class SaunumClient:
 
             # Parse control parameters
             session_active = bool(control_regs[0])
-            sauna_type = control_regs[1] if control_regs[1] >= 0 else None
+            sauna_type = control_regs[1]
             sauna_duration = control_regs[2] if control_regs[2] > 0 else None
             fan_duration = control_regs[3] if control_regs[3] > 0 else None
 
@@ -246,21 +246,13 @@ class SaunumClient:
                     "Invalid fan speed %d received (expected 0-3)", fan_speed_raw
                 )
                 fan_speed = None
-            light_on = bool(control_regs[6]) if control_regs[6] >= 0 else None
+            light_on = bool(control_regs[6])
 
             # Parse status sensors
-            current_temp = (
-                float(_decode_int16(status_regs[0])) if status_regs[0] >= 0 else None
-            )
+            current_temp = float(_decode_int16(status_regs[0]))
 
             # Combine 32-bit on time from two 16-bit registers
-            on_time_high = status_regs[1]
-            on_time_low = status_regs[2]
-            on_time = (
-                (on_time_high << 16) | on_time_low
-                if on_time_high >= 0 and on_time_low >= 0
-                else None
-            )
+            on_time = (status_regs[1] << 16) | status_regs[2]
 
             heater_elements_raw = status_regs[3]
             if 0 <= heater_elements_raw <= 3:
@@ -271,17 +263,15 @@ class SaunumClient:
                     heater_elements_raw,
                 )
                 heater_elements_active = None
-            door_open = bool(status_regs[4]) if status_regs[4] >= 0 else None
+            door_open = bool(status_regs[4])
 
             # Parse alarm status
-            alarm_door_open = bool(alarm_regs[0]) if alarm_regs[0] >= 0 else None
-            alarm_door_sensor = bool(alarm_regs[1]) if alarm_regs[1] >= 0 else None
-            alarm_thermal_cutoff = bool(alarm_regs[2]) if alarm_regs[2] >= 0 else None
-            alarm_internal_temp = bool(alarm_regs[3]) if alarm_regs[3] >= 0 else None
-            alarm_temp_sensor_short = (
-                bool(alarm_regs[4]) if alarm_regs[4] >= 0 else None
-            )
-            alarm_temp_sensor_open = bool(alarm_regs[5]) if alarm_regs[5] >= 0 else None
+            alarm_door_open = bool(alarm_regs[0])
+            alarm_door_sensor = bool(alarm_regs[1])
+            alarm_thermal_cutoff = bool(alarm_regs[2])
+            alarm_internal_temp = bool(alarm_regs[3])
+            alarm_temp_sensor_short = bool(alarm_regs[4])
+            alarm_temp_sensor_open = bool(alarm_regs[5])
 
             data = SaunumData(
                 session_active=session_active,
