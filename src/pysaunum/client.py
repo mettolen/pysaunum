@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
-from typing import Any, cast
+from typing import Any, Self, cast
 
 from pymodbus.client import AsyncModbusTcpClient
 from pymodbus.exceptions import ModbusException
@@ -53,6 +53,22 @@ _INT16_SIGN_BIT = 0x8000
 def _decode_int16(value: int) -> int:
     """Decode an unsigned 16-bit Modbus register as a signed integer."""
     return value - _UINT16_MAX if value >= _INT16_SIGN_BIT else value
+
+
+def _validate_registers(name: str, result: Any, expected_count: int) -> list[int]:
+    """Validate Modbus register read response length."""
+    if result.isError():
+        raise SaunumCommunicationError(f"Failed to read {name} registers: {result}")
+
+    registers = getattr(result, "registers", None)
+    if registers is None or len(registers) < expected_count:
+        actual_count = 0 if registers is None else len(registers)
+        raise SaunumInvalidDataError(
+            f"Incomplete {name} register data: "
+            f"expected {expected_count}, got {actual_count}"
+        )
+
+    return cast(list[int], registers)
 
 
 class SaunumClient:
@@ -145,6 +161,10 @@ class SaunumClient:
         """Return whether the client is connected."""
         return bool(self._client.connected)
 
+    def __repr__(self) -> str:
+        """Return string representation."""
+        return f"SaunumClient({self._host}:{self._port}, connected={self.is_connected})"
+
     async def connect(self) -> None:
         """Connect to the sauna controller.
 
@@ -188,7 +208,7 @@ class SaunumClient:
                 count=7,
                 device_id=self._device_id,
             )
-            control_regs = self._validate_registers(
+            control_regs = _validate_registers(
                 "control", control_result, expected_count=7
             )
 
@@ -198,9 +218,7 @@ class SaunumClient:
                 count=5,
                 device_id=self._device_id,
             )
-            status_regs = self._validate_registers(
-                "status", status_result, expected_count=5
-            )
+            status_regs = _validate_registers("status", status_result, expected_count=5)
 
             # Read alarm status (registers 200-205)
             alarm_result = await self._client.read_holding_registers(
@@ -208,9 +226,7 @@ class SaunumClient:
                 count=6,
                 device_id=self._device_id,
             )
-            alarm_regs = self._validate_registers(
-                "alarm", alarm_result, expected_count=6
-            )
+            alarm_regs = _validate_registers("alarm", alarm_result, expected_count=6)
 
             # Parse control parameters
             session_active = bool(control_regs[0])
@@ -315,7 +331,7 @@ class SaunumClient:
         """
         _LOGGER.debug("Starting sauna session")
         await self._async_write_register(REG_SESSION_ACTIVE, 1)
-        _LOGGER.info("Sauna session started")
+        _LOGGER.debug("Sauna session started")
 
     async def async_stop_session(self) -> None:
         """Stop the sauna session.
@@ -326,7 +342,7 @@ class SaunumClient:
         """
         _LOGGER.debug("Stopping sauna session")
         await self._async_write_register(REG_SESSION_ACTIVE, 0)
-        _LOGGER.info("Sauna session stopped")
+        _LOGGER.debug("Sauna session stopped")
 
     async def async_set_target_temperature(self, temperature: int) -> None:
         """Set the target temperature.
@@ -355,7 +371,7 @@ class SaunumClient:
 
         _LOGGER.debug("Setting target temperature to %d°C", temperature)
         await self._async_write_register(REG_TARGET_TEMPERATURE, temperature)
-        _LOGGER.info("Target temperature set to %d°C", temperature)
+        _LOGGER.debug("Target temperature set to %d°C", temperature)
 
     async def async_set_sauna_duration(self, minutes: int) -> None:
         """Set the sauna session duration.
@@ -382,7 +398,7 @@ class SaunumClient:
 
         _LOGGER.debug("Setting sauna duration to %d minutes", minutes)
         await self._async_write_register(REG_SAUNA_DURATION, minutes)
-        _LOGGER.info("Sauna duration set to %d minutes", minutes)
+        _LOGGER.debug("Sauna duration set to %d minutes", minutes)
 
     async def async_set_fan_duration(self, minutes: int) -> None:
         """Set the fan duration.
@@ -409,7 +425,7 @@ class SaunumClient:
 
         _LOGGER.debug("Setting fan duration to %d minutes", minutes)
         await self._async_write_register(REG_FAN_DURATION, minutes)
-        _LOGGER.info("Fan duration set to %d minutes", minutes)
+        _LOGGER.debug("Fan duration set to %d minutes", minutes)
 
     async def async_set_fan_speed(self, speed: int) -> None:
         """Set the fan speed.
@@ -433,7 +449,7 @@ class SaunumClient:
 
         _LOGGER.debug("Setting fan speed to %d", speed)
         await self._async_write_register(REG_FAN_SPEED, speed)
-        _LOGGER.info("Fan speed set to %d", speed)
+        _LOGGER.debug("Fan speed set to %d", speed)
 
     async def async_set_sauna_type(self, sauna_type: int) -> None:
         """Set the sauna type.
@@ -462,7 +478,7 @@ class SaunumClient:
 
         _LOGGER.debug("Setting sauna type to %d", sauna_type)
         await self._async_write_register(REG_SAUNA_TYPE, sauna_type)
-        _LOGGER.info("Sauna type set to %d", sauna_type)
+        _LOGGER.debug("Sauna type set to %d", sauna_type)
 
     async def async_set_light_control(self, enabled: bool) -> None:
         """Set light on/off control.
@@ -477,7 +493,7 @@ class SaunumClient:
         value = STATUS_ON if enabled else STATUS_OFF
         _LOGGER.debug("Setting light to %s", "on" if enabled else "off")
         await self._async_write_register(REG_LIGHT_CONTROL, value)
-        _LOGGER.info("Light turned %s", "on" if enabled else "off")
+        _LOGGER.debug("Light turned %s", "on" if enabled else "off")
 
     async def _async_write_register(self, address: int, value: int) -> None:
         """Write a single holding register.
@@ -531,30 +547,14 @@ class SaunumClient:
 
         _LOGGER.info("Disconnected from %s:%s", self._host, self._port)
 
-    async def __aenter__(self) -> SaunumClient:
+    async def __aenter__(self) -> Self:
         """Async context manager entry."""
         await self.connect()
         return self
 
-    async def __aexit__(self, *args: Any) -> None:
+    async def __aexit__(self, *args: object) -> None:
         """Async context manager exit."""
         await self.async_close()
-
-    @staticmethod
-    def _validate_registers(name: str, result: Any, expected_count: int) -> list[int]:
-        """Validate Modbus register read response length."""
-        if result.isError():
-            raise SaunumCommunicationError(f"Failed to read {name} registers: {result}")
-
-        registers = getattr(result, "registers", None)
-        if registers is None or len(registers) < expected_count:
-            actual_count = 0 if registers is None else len(registers)
-            raise SaunumInvalidDataError(
-                f"Incomplete {name} register data: "
-                f"expected {expected_count}, got {actual_count}"
-            )
-
-        return cast(list[int], registers)
 
     def close(self) -> None:
         """Close the connection synchronously (best effort).

@@ -23,8 +23,8 @@ from pysaunum.const import (
 )
 
 
-@pytest.mark.asyncio
-async def test_client_init() -> None:
+@pytest.mark.usefixtures("mock_modbus_client")
+def test_client_init() -> None:
     """Test client initialization."""
     client = SaunumClient(host="192.168.1.100")
     assert client.host == "192.168.1.100"
@@ -33,8 +33,8 @@ async def test_client_init() -> None:
     assert not client.is_connected
 
 
-@pytest.mark.asyncio
-async def test_client_init_custom_params() -> None:
+@pytest.mark.usefixtures("mock_modbus_client")
+def test_client_init_custom_params() -> None:
     """Test client initialization with custom parameters."""
     client = SaunumClient(host="10.0.0.1", port=5020, device_id=3, timeout=5)
     assert client.host == "10.0.0.1"
@@ -42,7 +42,13 @@ async def test_client_init_custom_params() -> None:
     assert client.device_id == 3
 
 
-@pytest.mark.asyncio
+@pytest.mark.usefixtures("mock_modbus_client")
+def test_client_repr() -> None:
+    """Test client string representation."""
+    client = SaunumClient(host="192.168.1.100")
+    assert repr(client) == "SaunumClient(192.168.1.100:502, connected=False)"
+
+
 async def test_connect_success(mock_modbus_client: MagicMock) -> None:
     """Test successful connection."""
     mock_modbus_client.connected = True
@@ -54,7 +60,6 @@ async def test_connect_success(mock_modbus_client: MagicMock) -> None:
     assert client.is_connected
 
 
-@pytest.mark.asyncio
 async def test_connect_failure(mock_modbus_client: MagicMock) -> None:
     """Test connection failure."""
     mock_modbus_client.connected = False
@@ -65,7 +70,6 @@ async def test_connect_failure(mock_modbus_client: MagicMock) -> None:
         await client.connect()
 
 
-@pytest.mark.asyncio
 async def test_get_data_success(mock_modbus_client: MagicMock) -> None:
     """Test successful data retrieval."""
     mock_modbus_client.connected = True
@@ -116,7 +120,6 @@ async def test_get_data_success(mock_modbus_client: MagicMock) -> None:
     assert data.alarm_temp_sensor_open is False
 
 
-@pytest.mark.asyncio
 async def test_get_data_negative_current_temperature(
     mock_modbus_client: MagicMock,
 ) -> None:
@@ -151,7 +154,6 @@ async def test_get_data_negative_current_temperature(
     assert data.current_temperature == -1.0
 
 
-@pytest.mark.asyncio
 async def test_get_data_not_connected(mock_modbus_client: MagicMock) -> None:
     """Test get_data when not connected."""
     mock_modbus_client.connected = False
@@ -162,7 +164,6 @@ async def test_get_data_not_connected(mock_modbus_client: MagicMock) -> None:
         await client.async_get_data()
 
 
-@pytest.mark.asyncio
 async def test_start_session(mock_modbus_client: MagicMock) -> None:
     """Test starting a session."""
     mock_modbus_client.connected = True
@@ -181,7 +182,6 @@ async def test_start_session(mock_modbus_client: MagicMock) -> None:
     )
 
 
-@pytest.mark.asyncio
 async def test_stop_session(mock_modbus_client: MagicMock) -> None:
     """Test stopping a session."""
     mock_modbus_client.connected = True
@@ -200,7 +200,6 @@ async def test_stop_session(mock_modbus_client: MagicMock) -> None:
     )
 
 
-@pytest.mark.asyncio
 async def test_set_temperature_valid(mock_modbus_client: MagicMock) -> None:
     """Test setting a valid temperature."""
     mock_modbus_client.connected = True
@@ -219,7 +218,6 @@ async def test_set_temperature_valid(mock_modbus_client: MagicMock) -> None:
     )
 
 
-@pytest.mark.asyncio
 async def test_set_temperature_invalid(mock_modbus_client: MagicMock) -> None:
     """Test setting an invalid temperature."""
     mock_modbus_client.connected = True
@@ -233,7 +231,6 @@ async def test_set_temperature_invalid(mock_modbus_client: MagicMock) -> None:
         await client.async_set_target_temperature(30)
 
 
-@pytest.mark.asyncio
 async def test_context_manager(mock_modbus_client: MagicMock) -> None:
     """Test using client as async context manager."""
     mock_modbus_client.connected = True
@@ -245,7 +242,6 @@ async def test_context_manager(mock_modbus_client: MagicMock) -> None:
     mock_modbus_client.close.assert_called_once()
 
 
-@pytest.mark.asyncio
 async def test_connect_oserror(mock_modbus_client: MagicMock) -> None:
     """Test connection failure with OSError."""
     mock_modbus_client.connect.side_effect = OSError("Network unreachable")
@@ -256,7 +252,6 @@ async def test_connect_oserror(mock_modbus_client: MagicMock) -> None:
         await client.connect()
 
 
-@pytest.mark.asyncio
 async def test_connect_modbus_exception(mock_modbus_client: MagicMock) -> None:
     """Test connection failure with ModbusException."""
     mock_modbus_client.connect.side_effect = ModbusException("Modbus error")
@@ -267,8 +262,7 @@ async def test_connect_modbus_exception(mock_modbus_client: MagicMock) -> None:
         await client.connect()
 
 
-@pytest.mark.asyncio
-async def test_close_when_connected(mock_modbus_client: MagicMock) -> None:
+def test_close_when_connected(mock_modbus_client: MagicMock) -> None:
     """Test closing connection when connected."""
     mock_modbus_client.connected = True
 
@@ -278,8 +272,7 @@ async def test_close_when_connected(mock_modbus_client: MagicMock) -> None:
     mock_modbus_client.close.assert_called_once()
 
 
-@pytest.mark.asyncio
-async def test_close_when_not_connected(mock_modbus_client: MagicMock) -> None:
+def test_close_when_not_connected(mock_modbus_client: MagicMock) -> None:
     """Test closing connection when not connected."""
     mock_modbus_client.connected = False
 
@@ -289,7 +282,6 @@ async def test_close_when_not_connected(mock_modbus_client: MagicMock) -> None:
     mock_modbus_client.close.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_get_data_holding_registers_error(mock_modbus_client: MagicMock) -> None:
     """Test get_data when holding registers read fails."""
     mock_modbus_client.connected = True
@@ -307,7 +299,6 @@ async def test_get_data_holding_registers_error(mock_modbus_client: MagicMock) -
         await client.async_get_data()
 
 
-@pytest.mark.asyncio
 async def test_get_data_sensor_registers_error(mock_modbus_client: MagicMock) -> None:
     """Test get_data when status registers read fails."""
     mock_modbus_client.connected = True
@@ -334,7 +325,6 @@ async def test_get_data_sensor_registers_error(mock_modbus_client: MagicMock) ->
         await client.async_get_data()
 
 
-@pytest.mark.asyncio
 async def test_get_data_alarm_registers_error(mock_modbus_client: MagicMock) -> None:
     """Test get_data when alarm registers read fails."""
     mock_modbus_client.connected = True
@@ -367,7 +357,6 @@ async def test_get_data_alarm_registers_error(mock_modbus_client: MagicMock) -> 
         await client.async_get_data()
 
 
-@pytest.mark.asyncio
 async def test_get_data_timeout_error(mock_modbus_client: MagicMock) -> None:
     """Test get_data when timeout occurs."""
     mock_modbus_client.connected = True
@@ -379,7 +368,6 @@ async def test_get_data_timeout_error(mock_modbus_client: MagicMock) -> None:
         await client.async_get_data()
 
 
-@pytest.mark.asyncio
 async def test_get_data_modbus_exception(mock_modbus_client: MagicMock) -> None:
     """Test get_data when modbus exception occurs."""
     mock_modbus_client.connected = True
@@ -393,7 +381,6 @@ async def test_get_data_modbus_exception(mock_modbus_client: MagicMock) -> None:
         await client.async_get_data()
 
 
-@pytest.mark.asyncio
 async def test_get_data_invalid_data(mock_modbus_client: MagicMock) -> None:
     """Test get_data when invalid data is received."""
     mock_modbus_client.connected = True
@@ -413,7 +400,6 @@ async def test_get_data_invalid_data(mock_modbus_client: MagicMock) -> None:
         await client.async_get_data()
 
 
-@pytest.mark.asyncio
 async def test_get_data_high_target_temperature(
     mock_modbus_client: MagicMock, caplog: pytest.LogCaptureFixture
 ) -> None:
@@ -450,7 +436,6 @@ async def test_get_data_high_target_temperature(
     assert data.target_temperature == 150
 
 
-@pytest.mark.asyncio
 async def test_get_data_low_target_temperature(mock_modbus_client: MagicMock) -> None:
     """Test get_data with target temperature below minimum."""
     mock_modbus_client.connected = True
@@ -484,7 +469,6 @@ async def test_get_data_low_target_temperature(mock_modbus_client: MagicMock) ->
     assert data.target_temperature == 30
 
 
-@pytest.mark.asyncio
 async def test_write_register_error(mock_modbus_client: MagicMock) -> None:
     """Test write register with error response."""
     mock_modbus_client.connected = True
@@ -499,7 +483,6 @@ async def test_write_register_error(mock_modbus_client: MagicMock) -> None:
         await client.async_start_session()
 
 
-@pytest.mark.asyncio
 async def test_write_register_modbus_exception(mock_modbus_client: MagicMock) -> None:
     """Test write register with modbus exception."""
     mock_modbus_client.connected = True
@@ -511,7 +494,6 @@ async def test_write_register_modbus_exception(mock_modbus_client: MagicMock) ->
         await client.async_start_session()
 
 
-@pytest.mark.asyncio
 async def test_write_register_not_connected(mock_modbus_client: MagicMock) -> None:
     """Test write register when not connected."""
     mock_modbus_client.connected = False
@@ -522,7 +504,6 @@ async def test_write_register_not_connected(mock_modbus_client: MagicMock) -> No
         await client.async_start_session()
 
 
-@pytest.mark.asyncio
 async def test_write_register_timeout(mock_modbus_client: MagicMock) -> None:
     """Test write register when timeout occurs."""
     mock_modbus_client.connected = True
@@ -534,7 +515,6 @@ async def test_write_register_timeout(mock_modbus_client: MagicMock) -> None:
         await client.async_start_session()
 
 
-@pytest.mark.asyncio
 async def test_set_sauna_duration_valid(mock_modbus_client: MagicMock) -> None:
     """Test setting valid sauna duration."""
     mock_modbus_client.connected = True
@@ -547,7 +527,6 @@ async def test_set_sauna_duration_valid(mock_modbus_client: MagicMock) -> None:
     )
 
 
-@pytest.mark.asyncio
 async def test_set_sauna_duration_invalid(mock_modbus_client: MagicMock) -> None:
     """Test setting invalid sauna duration."""
     mock_modbus_client.connected = True
@@ -558,7 +537,6 @@ async def test_set_sauna_duration_invalid(mock_modbus_client: MagicMock) -> None
         await client.async_set_sauna_duration(800)
 
 
-@pytest.mark.asyncio
 async def test_set_sauna_duration_invalid_negative(
     mock_modbus_client: MagicMock,
 ) -> None:
@@ -571,7 +549,6 @@ async def test_set_sauna_duration_invalid_negative(
         await client.async_set_sauna_duration(-5)
 
 
-@pytest.mark.asyncio
 async def test_set_sauna_duration_min_valid(mock_modbus_client: MagicMock) -> None:
     """Test setting minimum valid sauna duration (1 minute)."""
     mock_modbus_client.connected = True
@@ -584,7 +561,6 @@ async def test_set_sauna_duration_min_valid(mock_modbus_client: MagicMock) -> No
     )
 
 
-@pytest.mark.asyncio
 async def test_set_sauna_duration_max_valid(mock_modbus_client: MagicMock) -> None:
     """Test setting maximum valid sauna duration (720 minutes / 12 hours)."""
     mock_modbus_client.connected = True
@@ -597,7 +573,6 @@ async def test_set_sauna_duration_max_valid(mock_modbus_client: MagicMock) -> No
     )
 
 
-@pytest.mark.asyncio
 async def test_set_fan_speed_valid(mock_modbus_client: MagicMock) -> None:
     """Test setting valid fan speed."""
     mock_modbus_client.connected = True
@@ -610,7 +585,6 @@ async def test_set_fan_speed_valid(mock_modbus_client: MagicMock) -> None:
     )
 
 
-@pytest.mark.asyncio
 async def test_set_fan_speed_invalid(mock_modbus_client: MagicMock) -> None:
     """Test setting invalid fan speed."""
     mock_modbus_client.connected = True
@@ -621,7 +595,6 @@ async def test_set_fan_speed_invalid(mock_modbus_client: MagicMock) -> None:
         await client.async_set_fan_speed(4)
 
 
-@pytest.mark.asyncio
 async def test_set_sauna_type_valid(mock_modbus_client: MagicMock) -> None:
     """Test setting valid sauna type 1 (value 0)."""
     mock_modbus_client.connected = True
@@ -634,7 +607,6 @@ async def test_set_sauna_type_valid(mock_modbus_client: MagicMock) -> None:
     )
 
 
-@pytest.mark.asyncio
 async def test_set_sauna_type_invalid(mock_modbus_client: MagicMock) -> None:
     """Test setting invalid sauna type."""
     mock_modbus_client.connected = True
@@ -645,7 +617,6 @@ async def test_set_sauna_type_invalid(mock_modbus_client: MagicMock) -> None:
         await client.async_set_sauna_type(3)
 
 
-@pytest.mark.asyncio
 async def test_set_sauna_type_2_valid(mock_modbus_client: MagicMock) -> None:
     """Test setting sauna type 2 (value 1)."""
     mock_modbus_client.connected = True
@@ -658,7 +629,6 @@ async def test_set_sauna_type_2_valid(mock_modbus_client: MagicMock) -> None:
     )
 
 
-@pytest.mark.asyncio
 async def test_set_sauna_type_3_valid(mock_modbus_client: MagicMock) -> None:
     """Test setting sauna type 3 (value 2)."""
     mock_modbus_client.connected = True
@@ -671,7 +641,6 @@ async def test_set_sauna_type_3_valid(mock_modbus_client: MagicMock) -> None:
     )
 
 
-@pytest.mark.asyncio
 async def test_set_light_control(mock_modbus_client: MagicMock) -> None:
     """Test setting light control."""
     mock_modbus_client.connected = True
@@ -684,7 +653,6 @@ async def test_set_light_control(mock_modbus_client: MagicMock) -> None:
     )
 
 
-@pytest.mark.asyncio
 async def test_set_fan_duration_valid(mock_modbus_client: MagicMock) -> None:
     """Test setting valid fan duration."""
     mock_modbus_client.connected = True
@@ -697,7 +665,6 @@ async def test_set_fan_duration_valid(mock_modbus_client: MagicMock) -> None:
     )
 
 
-@pytest.mark.asyncio
 async def test_set_fan_duration_zero(mock_modbus_client: MagicMock) -> None:
     """Test setting fan duration to zero (off)."""
     mock_modbus_client.connected = True
@@ -710,7 +677,6 @@ async def test_set_fan_duration_zero(mock_modbus_client: MagicMock) -> None:
     )
 
 
-@pytest.mark.asyncio
 async def test_set_fan_duration_max(mock_modbus_client: MagicMock) -> None:
     """Test setting fan duration to maximum (30)."""
     mock_modbus_client.connected = True
@@ -723,7 +689,6 @@ async def test_set_fan_duration_max(mock_modbus_client: MagicMock) -> None:
     )
 
 
-@pytest.mark.asyncio
 async def test_set_fan_duration_invalid_high(mock_modbus_client: MagicMock) -> None:
     """Test setting invalid high fan duration."""
     mock_modbus_client.connected = True
@@ -734,7 +699,6 @@ async def test_set_fan_duration_invalid_high(mock_modbus_client: MagicMock) -> N
         await client.async_set_fan_duration(31)
 
 
-@pytest.mark.asyncio
 async def test_set_fan_duration_invalid_negative(mock_modbus_client: MagicMock) -> None:
     """Test setting invalid negative fan duration."""
     mock_modbus_client.connected = True
@@ -745,7 +709,6 @@ async def test_set_fan_duration_invalid_negative(mock_modbus_client: MagicMock) 
         await client.async_set_fan_duration(-1)
 
 
-@pytest.mark.asyncio
 async def test_set_temperature_zero_valid(mock_modbus_client: MagicMock) -> None:
     """Test setting temperature to zero (off)."""
     mock_modbus_client.connected = True
@@ -758,7 +721,6 @@ async def test_set_temperature_zero_valid(mock_modbus_client: MagicMock) -> None
     )
 
 
-@pytest.mark.asyncio
 async def test_set_temperature_below_min_invalid(mock_modbus_client: MagicMock) -> None:
     """Test setting temperature below minimum (but not zero)."""
     mock_modbus_client.connected = True
@@ -769,7 +731,6 @@ async def test_set_temperature_below_min_invalid(mock_modbus_client: MagicMock) 
         await client.async_set_target_temperature(39)
 
 
-@pytest.mark.asyncio
 async def test_set_temperature_negative_invalid(mock_modbus_client: MagicMock) -> None:
     """Test setting negative temperature."""
     mock_modbus_client.connected = True
@@ -780,7 +741,6 @@ async def test_set_temperature_negative_invalid(mock_modbus_client: MagicMock) -
         await client.async_set_target_temperature(-1)
 
 
-@pytest.mark.asyncio
 async def test_set_sauna_duration_zero_valid(mock_modbus_client: MagicMock) -> None:
     """Test setting sauna duration to zero (off)."""
     mock_modbus_client.connected = True
@@ -793,7 +753,6 @@ async def test_set_sauna_duration_zero_valid(mock_modbus_client: MagicMock) -> N
     )
 
 
-@pytest.mark.asyncio
 async def test_get_data_heater_elements_count(mock_modbus_client: MagicMock) -> None:
     """Test heater elements count parsing for different values."""
     mock_modbus_client.connected = True
@@ -841,7 +800,6 @@ async def test_get_data_heater_elements_count(mock_modbus_client: MagicMock) -> 
     assert data.heater_elements_active == 5
 
 
-@pytest.mark.asyncio
 async def test_async_close_awaits_coroutine(mock_modbus_client: MagicMock) -> None:
     """Ensure async_close awaits coroutine close implementations."""
     mock_modbus_client.connected = True
@@ -854,7 +812,6 @@ async def test_async_close_awaits_coroutine(mock_modbus_client: MagicMock) -> No
     close_mock.assert_awaited_once()
 
 
-@pytest.mark.asyncio
 async def test_get_data_fan_speed_validation(mock_modbus_client: MagicMock) -> None:
     """Test fan speed validation for different values."""
     mock_modbus_client.connected = True
@@ -915,7 +872,6 @@ async def test_get_data_fan_speed_validation(mock_modbus_client: MagicMock) -> N
     assert data.fan_speed is None
 
 
-@pytest.mark.asyncio
 async def test_get_data_invalid_data_error(mock_modbus_client: MagicMock) -> None:
     """Test get_data when invalid data structure causes parsing error."""
     mock_modbus_client.connected = True
@@ -948,7 +904,6 @@ async def test_get_data_invalid_data_error(mock_modbus_client: MagicMock) -> Non
             await client.async_get_data()
 
 
-@pytest.mark.asyncio
 async def test_async_close_when_not_connected(mock_modbus_client: MagicMock) -> None:
     """Test async_close when client is not connected."""
     mock_modbus_client.connected = False
@@ -960,24 +915,27 @@ async def test_async_close_when_not_connected(mock_modbus_client: MagicMock) -> 
     mock_modbus_client.close.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_close_with_coroutine_function(mock_modbus_client: MagicMock) -> None:
     """Test close when client.close is a coroutine function."""
     mock_modbus_client.connected = True
 
+    close_called = False
+
     async def async_close_method() -> None:
         """Mock async close method."""
+        nonlocal close_called
+        close_called = True
 
     mock_modbus_client.close = async_close_method
 
     client = SaunumClient(host="192.168.1.100")
     client.close()
 
-    # Give the event loop time to process the task
-    await asyncio.sleep(0.1)
+    # The coroutine is scheduled as a task; yield control so it runs
+    await asyncio.sleep(0)
+    assert close_called
 
 
-@pytest.mark.asyncio
 async def test_close_with_coroutine_no_running_loop(
     mock_modbus_client: MagicMock,
 ) -> None:
@@ -1002,7 +960,6 @@ async def test_close_with_coroutine_no_running_loop(
     thread.join(timeout=1.0)
 
 
-@pytest.mark.asyncio
 async def test_create_factory_method_success(mock_modbus_client: MagicMock) -> None:
     """Test factory method creates and connects client."""
     mock_modbus_client.connected = True
@@ -1014,7 +971,6 @@ async def test_create_factory_method_success(mock_modbus_client: MagicMock) -> N
     mock_modbus_client.connect.assert_called_once()
 
 
-@pytest.mark.asyncio
 async def test_create_factory_method_connection_failure(
     mock_modbus_client: MagicMock,
 ) -> None:
@@ -1025,7 +981,6 @@ async def test_create_factory_method_connection_failure(
         await SaunumClient.create("192.168.1.100")
 
 
-@pytest.mark.asyncio
 async def test_create_factory_method_with_custom_params(
     mock_modbus_client: MagicMock,
 ) -> None:
@@ -1042,7 +997,6 @@ async def test_create_factory_method_with_custom_params(
     assert client.host == "192.168.1.50"
 
 
-@pytest.mark.asyncio
 async def test_create_factory_method_oserror(mock_modbus_client: MagicMock) -> None:
     """Test factory method handles OSError."""
     mock_modbus_client.connect.side_effect = OSError("Network unreachable")
@@ -1051,7 +1005,6 @@ async def test_create_factory_method_oserror(mock_modbus_client: MagicMock) -> N
         await SaunumClient.create("192.168.1.100")
 
 
-@pytest.mark.asyncio
 async def test_create_factory_method_modbus_exception(
     mock_modbus_client: MagicMock,
 ) -> None:
