@@ -2,7 +2,13 @@
 
 import asyncio
 
-from pysaunum import SaunumClient, SaunumCommunicationError, SaunumConnectionError
+from pysaunum import (
+    SaunumClient,
+    SaunumCommunicationError,
+    SaunumConnectionError,
+    SaunumData,
+    SaunumTimeoutError,
+)
 from pysaunum.const import (
     DEFAULT_DURATION,
     MAX_DURATION,
@@ -15,33 +21,60 @@ from pysaunum.const import (
     SaunaType,
 )
 
+HOST = "192.168.1.143"
+
+
+def _print_state(data: SaunumData) -> None:
+    """Print the full sauna state."""
+    fan_name = (
+        data.fan_speed.name.capitalize() if data.fan_speed is not None else "Unknown"
+    )
+    sauna_type_name = (
+        data.sauna_type.name
+        if isinstance(data.sauna_type, SaunaType)
+        else f"Unknown({data.sauna_type})"
+    )
+
+    print(f"  Current temperature: {data.current_temperature}°C")
+    print(f"  Target temperature:  {data.target_temperature}°C")
+    print(f"  Session active:      {data.session_active}")
+    print(f"  Heater elements:     {data.heater_elements_active}")
+    print(f"  Fan speed:           {data.fan_speed} ({fan_name})")
+    print(f"  Sauna type:          {data.sauna_type} ({sauna_type_name})")
+    print(f"  Session duration:    {data.sauna_duration} minutes")
+    print(f"  Fan duration:        {data.fan_duration} minutes")
+    print(f"  Light on:            {data.light_on}")
+    print(f"  Door open:           {data.door_open}")
+    print(f"  On time:             {data.on_time} seconds")
+
+    # Alarm summary
+    alarms = [
+        ("Door open", data.alarm_door_open),
+        ("Door sensor", data.alarm_door_sensor),
+        ("Thermal cutoff", data.alarm_thermal_cutoff),
+        ("Internal temp", data.alarm_internal_temp),
+        ("Temp sensor short", data.alarm_temp_sensor_short),
+        ("Temp sensor open", data.alarm_temp_sensor_open),
+    ]
+    active_alarms = [name for name, active in alarms if active]
+    if active_alarms:
+        print(f"  Active alarms:       {', '.join(active_alarms)}")
+    else:
+        print("  Active alarms:       None")
+
 
 async def main() -> None:
     """Example main function demonstrating all pysaunum features."""
-    # Create client - replace with your sauna controller's IP
-    client = SaunumClient(host="192.168.1.100", port=502)
+    # Create and connect using the factory method (recommended)
+    print("Connecting to sauna controller...")
+    client = await SaunumClient.create(host=HOST)
+    print(f"Connected! ({client!r})")
 
     try:
-        # Connect to the sauna controller
-        print("Connecting to sauna controller...")
-        await client.connect()
-        print("Connected!")
-
         # Read current state
         print("\nReading current state...")
         data = await client.async_get_data()
-        print(f"  Current temperature: {data.current_temperature}°C")
-        print(f"  Target temperature: {data.target_temperature}°C")
-        print(f"  Session active: {data.session_active}")
-        print(f"  Heater elements active: {data.heater_elements_active}")
-        fan_speed_names = ["Off", "Low", "Medium", "High"]
-        if data.fan_speed is not None and 0 <= data.fan_speed <= 3:
-            fan_name = fan_speed_names[data.fan_speed]
-        else:
-            fan_name = "Unknown"
-        print(f"  Fan speed: {data.fan_speed} ({fan_name})")
-        print(f"  Sauna type: {data.sauna_type}")
-        print(f"  Session duration: {data.sauna_duration} minutes")
+        _print_state(data)
 
         # Example: Configure sauna settings
         print("\nConfiguring sauna settings...")
@@ -50,19 +83,19 @@ async def main() -> None:
         print(f"Setting sauna type to Type 2 (value {SaunaType.TYPE_2})...")
         await client.async_set_sauna_type(SaunaType.TYPE_2)
 
-        # Set target temperature (0 to turn off, or 40-100°C)
+        # Set target temperature (0 for type default, or 40-100°C)
         print("Setting target temperature to 85°C...")
         await client.async_set_target_temperature(85)
 
-        # Set session duration (0-720 minutes, default 120)
+        # Set session duration (0-720 minutes, 0 for type default)
         print(f"Setting session duration to {DEFAULT_DURATION} minutes...")
         await client.async_set_sauna_duration(DEFAULT_DURATION)
 
         # Set fan speed (0=Off, 1=Low, 2=Medium, 3=High)
-        print(f"Setting fan speed to Medium (value {FanSpeed.MEDIUM})...")
+        print(f"Setting fan speed to Medium ({FanSpeed.MEDIUM})...")
         await client.async_set_fan_speed(FanSpeed.MEDIUM)
 
-        # Set fan duration (0-30 minutes, 0=continuous)
+        # Set fan duration (0-30 minutes, 0 for type default)
         print("Setting fan duration to 15 minutes...")
         await client.async_set_fan_duration(15)
 
@@ -75,25 +108,14 @@ async def main() -> None:
         # Read updated state
         print("\nReading updated state after configuration...")
         data = await client.async_get_data()
-        print(f"  Current temperature: {data.current_temperature}°C")
-        print(f"  Target temperature: {data.target_temperature}°C")
-        print(f"  Session active: {data.session_active}")
-        print(f"  Heater elements active: {data.heater_elements_active}/3")
-        print(f"  Fan speed: {data.fan_speed}")
-        print(f"  Sauna type: {data.sauna_type}")
-        print(f"  Session duration: {data.sauna_duration} minutes")
+        _print_state(data)
 
         # Demonstrate fan speed control
         print("\nDemonstrating fan speed control...")
-        for speed, name in [
-            (FanSpeed.OFF, "Off"),
-            (FanSpeed.LOW, "Low"),
-            (FanSpeed.HIGH, "High"),
-            (FanSpeed.OFF, "Off"),
-        ]:
-            print(f"Setting fan to {name}...")
+        for speed in (FanSpeed.OFF, FanSpeed.LOW, FanSpeed.HIGH, FanSpeed.OFF):
+            print(f"Setting fan to {speed.name.capitalize()}...")
             await client.async_set_fan_speed(speed)
-            await asyncio.sleep(2)  # Small delay for demonstration
+            await asyncio.sleep(2)
 
         # Stop the session
         print("\nStopping session...")
@@ -111,12 +133,20 @@ async def main() -> None:
 
     except SaunumConnectionError as err:
         print(f"Connection error: {err}")
+    except SaunumTimeoutError as err:
+        print(f"Timeout error: {err}")
     except SaunumCommunicationError as err:
         print(f"Communication error: {err}")
     finally:
-        # Close the connection
+        # Always stop the session and turn off the light before disconnecting
+        try:
+            await client.async_stop_session()
+            await client.async_set_light_control(False)
+            print("Sauna session stopped and light turned off")
+        except (SaunumConnectionError, SaunumTimeoutError, SaunumCommunicationError):
+            print("Warning: could not stop session during cleanup")
         await client.async_close()
-        print("\nDisconnected.")
+        print("Disconnected.")
 
 
 async def main_with_context_manager() -> None:
@@ -126,12 +156,9 @@ async def main_with_context_manager() -> None:
     print("=" * 50)
 
     try:
-        async with SaunumClient(host="192.168.1.100") as client:
-            # Get current state
+        async with SaunumClient(host=HOST) as client:
             data = await client.async_get_data()
-            print(f"Current temperature: {data.current_temperature}°C")
-            print(f"Target temperature: {data.target_temperature}°C")
-            print(f"Heater elements active: {data.heater_elements_active}")
+            _print_state(data)
 
             # Quick session example
             if not data.session_active:
@@ -140,10 +167,19 @@ async def main_with_context_manager() -> None:
                 await client.async_set_sauna_duration(60)  # 1 hour
                 await client.async_start_session()
                 print("Session started!")
-            else:
-                print("Session already active")
 
-    except (SaunumConnectionError, SaunumCommunicationError) as err:
+                await asyncio.sleep(2)
+
+                # Stop the session before exiting
+                print("Stopping session...")
+                await client.async_stop_session()
+                print("Session stopped.")
+            else:
+                print("Session already active, stopping it...")
+                await client.async_stop_session()
+                print("Session stopped.")
+
+    except (SaunumConnectionError, SaunumTimeoutError, SaunumCommunicationError) as err:
         print(f"Error: {err}")
 
 
@@ -154,15 +190,12 @@ async def demonstrate_constants() -> None:
     print("=" * 50)
 
     print("Fan Speed Constants:")
-    print(f"  FanSpeed.OFF = {FanSpeed.OFF}")
-    print(f"  FanSpeed.LOW = {FanSpeed.LOW}")
-    print(f"  FanSpeed.MEDIUM = {FanSpeed.MEDIUM}")
-    print(f"  FanSpeed.HIGH = {FanSpeed.HIGH}")
+    for speed in FanSpeed:
+        print(f"  FanSpeed.{speed.name} = {speed.value}")
 
-    print("\nSauna Type Constants (0-indexed):")
-    print(f"  SaunaType.TYPE_1 = {SaunaType.TYPE_1}")
-    print(f"  SaunaType.TYPE_2 = {SaunaType.TYPE_2}")
-    print(f"  SaunaType.TYPE_3 = {SaunaType.TYPE_3}")
+    print("\nSauna Type Constants:")
+    for sauna_type in SaunaType:
+        print(f"  SaunaType.{sauna_type.name} = {sauna_type.value}")
 
     print("\nTemperature Limits:")
     print(f"  MIN_TEMPERATURE = {MIN_TEMPERATURE}°C")
@@ -193,4 +226,4 @@ if __name__ == "__main__":
     # Run context manager example
     asyncio.run(main_with_context_manager())
 
-    print("\nExample completed! 🚀")
+    print("\nExample completed!")
