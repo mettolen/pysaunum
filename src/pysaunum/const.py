@@ -28,7 +28,7 @@ __all__ = [
 # Default connection settings
 DEFAULT_PORT: Final = 502
 DEFAULT_DEVICE_ID: Final = 1
-DEFAULT_TIMEOUT: Final = 10  # seconds
+DEFAULT_TIMEOUT: Final = 10.0  # seconds
 
 # Modbus register addresses - Holding Registers (Read/Write Control Parameters)
 REG_SESSION_ACTIVE: Final = 0  # Session on/off control 0=Off, 1=On

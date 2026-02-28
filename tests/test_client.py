@@ -1,9 +1,7 @@
 """Tests for SaunumClient."""
 # pylint: disable=redefined-outer-name
 
-import asyncio
-import threading
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pymodbus.exceptions import ModbusException
@@ -31,6 +29,20 @@ def test_client_init() -> None:
     assert client.port == 502
     assert client.device_id == 1
     assert not client.is_connected
+
+
+@pytest.mark.usefixtures("mock_modbus_client")
+def test_client_init_empty_host() -> None:
+    """Test client initialization with empty host raises ValueError."""
+    with pytest.raises(ValueError, match="Host must be a non-empty string"):
+        SaunumClient(host="")
+
+
+@pytest.mark.usefixtures("mock_modbus_client")
+def test_client_init_blank_host() -> None:
+    """Test client initialization with blank host raises ValueError."""
+    with pytest.raises(ValueError, match="Host must be a non-empty string"):
+        SaunumClient(host="   ")
 
 
 @pytest.mark.usefixtures("mock_modbus_client")
@@ -262,24 +274,14 @@ async def test_connect_modbus_exception(mock_modbus_client: MagicMock) -> None:
         await client.connect()
 
 
-def test_close_when_connected(mock_modbus_client: MagicMock) -> None:
-    """Test closing connection when connected."""
-    mock_modbus_client.connected = True
+async def test_connect_timeout(mock_modbus_client: MagicMock) -> None:
+    """Test connection failure with TimeoutError."""
+    mock_modbus_client.connect.side_effect = TimeoutError("Connection timed out")
 
     client = SaunumClient(host="192.168.1.100")
-    client.close()
 
-    mock_modbus_client.close.assert_called_once()
-
-
-def test_close_when_not_connected(mock_modbus_client: MagicMock) -> None:
-    """Test closing connection when not connected."""
-    mock_modbus_client.connected = False
-
-    client = SaunumClient(host="192.168.1.100")
-    client.close()
-
-    mock_modbus_client.close.assert_not_called()
+    with pytest.raises(SaunumTimeoutError, match="Timeout connecting"):
+        await client.connect()
 
 
 async def test_get_data_holding_registers_error(mock_modbus_client: MagicMock) -> None:
@@ -800,16 +802,14 @@ async def test_get_data_heater_elements_count(mock_modbus_client: MagicMock) -> 
     assert data.heater_elements_active == 5
 
 
-async def test_async_close_awaits_coroutine(mock_modbus_client: MagicMock) -> None:
-    """Ensure async_close awaits coroutine close implementations."""
+async def test_async_close_calls_close(mock_modbus_client: MagicMock) -> None:
+    """Ensure async_close calls underlying close."""
     mock_modbus_client.connected = True
-    close_mock = AsyncMock()
-    mock_modbus_client.close = close_mock
 
     client = SaunumClient(host="192.168.1.100")
     await client.async_close()
 
-    close_mock.assert_awaited_once()
+    mock_modbus_client.close.assert_called_once()
 
 
 async def test_get_data_fan_speed_validation(mock_modbus_client: MagicMock) -> None:
@@ -913,51 +913,6 @@ async def test_async_close_when_not_connected(mock_modbus_client: MagicMock) -> 
 
     # close should not be called when not connected
     mock_modbus_client.close.assert_not_called()
-
-
-async def test_close_with_coroutine_function(mock_modbus_client: MagicMock) -> None:
-    """Test close when client.close is a coroutine function."""
-    mock_modbus_client.connected = True
-
-    close_called = False
-
-    async def async_close_method() -> None:
-        """Mock async close method."""
-        nonlocal close_called
-        close_called = True
-
-    mock_modbus_client.close = async_close_method
-
-    client = SaunumClient(host="192.168.1.100")
-    client.close()
-
-    # The coroutine is scheduled as a task; yield control so it runs
-    await asyncio.sleep(0)
-    assert close_called
-
-
-async def test_close_with_coroutine_no_running_loop(
-    mock_modbus_client: MagicMock,
-) -> None:
-    """Test close when client.close is a coroutine function and no loop is running."""
-    mock_modbus_client.connected = True
-
-    async def async_close_method() -> None:
-        """Mock async close method."""
-
-    mock_modbus_client.close = async_close_method
-
-    client = SaunumClient(host="192.168.1.100")
-
-    # Run in a separate thread without event loop
-
-    def run_close() -> None:
-        """Run close in thread without event loop."""
-        client.close()
-
-    thread = threading.Thread(target=run_close)
-    thread.start()
-    thread.join(timeout=1.0)
 
 
 async def test_create_factory_method_success(mock_modbus_client: MagicMock) -> None:

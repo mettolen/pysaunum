@@ -23,7 +23,7 @@ class SaunumCommunicationError(SaunumException):
     """Exception raised when communication with sauna controller fails."""
 
 
-class SaunumTimeoutError(SaunumException):
+class SaunumTimeoutError(SaunumException, TimeoutError):
     """Exception raised when a request to sauna controller times out."""
 
 

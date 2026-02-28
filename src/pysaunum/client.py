@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
-import inspect
 import logging
 from typing import Any, Self, cast
 
@@ -79,7 +77,7 @@ class SaunumClient:
         host: str,
         port: int = DEFAULT_PORT,
         device_id: int = DEFAULT_DEVICE_ID,
-        timeout: int = DEFAULT_TIMEOUT,
+        timeout: float = DEFAULT_TIMEOUT,
     ) -> None:
         """Initialize the Saunum client.
 
@@ -92,7 +90,13 @@ class SaunumClient:
         Note:
             For production use, prefer using the create() factory method
             which ensures the connection is established before returning.
+
+        Raises:
+            ValueError: If host is empty or blank
         """
+        if not host or not host.strip():
+            raise ValueError("Host must be a non-empty string")
+
         self._host = host
         self._port = port
         self._device_id = device_id
@@ -109,7 +113,7 @@ class SaunumClient:
         host: str,
         port: int = DEFAULT_PORT,
         device_id: int = DEFAULT_DEVICE_ID,
-        timeout: int = DEFAULT_TIMEOUT,
+        timeout: float = DEFAULT_TIMEOUT,
     ) -> SaunumClient:
         """Create and connect a SaunumClient instance.
 
@@ -170,6 +174,7 @@ class SaunumClient:
 
         Raises:
             SaunumConnectionError: If connection fails
+            SaunumTimeoutError: If connection times out
         """
         try:
             await self._client.connect()
@@ -177,7 +182,12 @@ class SaunumClient:
                 raise SaunumConnectionError(
                     f"Failed to connect to {self._host}:{self._port}"
                 )
-            _LOGGER.info("Connected to %s:%s", self._host, self._port)
+            _LOGGER.debug("Connected to %s:%s", self._host, self._port)
+        except TimeoutError as err:
+            _LOGGER.debug("Timeout connecting to %s:%s", self._host, self._port)
+            raise SaunumTimeoutError(
+                f"Timeout connecting to {self._host}:{self._port}"
+            ) from err
         except (OSError, ModbusException) as err:
             _LOGGER.debug("Failed to connect to %s:%s: %s", self._host, self._port, err)
             raise SaunumConnectionError(
@@ -534,18 +544,14 @@ class SaunumClient:
             ) from err
 
     async def async_close(self) -> None:
-        """Close the connection to the sauna controller asynchronously."""
+        """Close the connection to the sauna controller."""
         if not self._client.connected:
             _LOGGER.debug("Already disconnected from %s:%s", self._host, self._port)
             return
 
         _LOGGER.debug("Closing connection to %s:%s", self._host, self._port)
-        close_method = self._client.close  # Capture to avoid pylint no-return warning
-        result = cast(Any, close_method())
-        if inspect.isawaitable(result):
-            await result
-
-        _LOGGER.info("Disconnected from %s:%s", self._host, self._port)
+        self._client.close()
+        _LOGGER.debug("Disconnected from %s:%s", self._host, self._port)
 
     async def __aenter__(self) -> Self:
         """Async context manager entry."""
@@ -555,30 +561,3 @@ class SaunumClient:
     async def __aexit__(self, *args: object) -> None:
         """Async context manager exit."""
         await self.async_close()
-
-    def close(self) -> None:
-        """Close the connection synchronously (best effort).
-
-        If the underlying client returns an awaitable close, this schedules
-        it when a running loop is present or runs it in a new event loop when
-        none is running. Prefer ``async_close`` in async contexts.
-        """
-
-        if not self._client.connected:
-            _LOGGER.debug("Already disconnected from %s:%s", self._host, self._port)
-            return
-
-        _LOGGER.debug("Closing connection to %s:%s", self._host, self._port)
-        close_method = self._client.close
-        if inspect.iscoroutinefunction(close_method):
-            close_coro = close_method()  # pylint: disable=assignment-from-no-return
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                asyncio.run(close_coro)
-            else:
-                loop.create_task(close_coro)
-        else:
-            close_method()
-
-        _LOGGER.info("Disconnected from %s:%s", self._host, self._port)
