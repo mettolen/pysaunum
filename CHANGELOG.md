@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-02-28
+
+### Breaking Changes
+
+- Removed `None` type from most `SaunumData` fields; boolean and integer fields now always have concrete values
+  - `sauna_duration`, `fan_duration`, `target_temperature` are now `int` (0 = sauna type default)
+  - `light_on`, `door_open`, `current_temperature`, `on_time`, `heater_elements_active` are no longer nullable
+  - All alarm fields (`alarm_door_open`, `alarm_door_sensor`, etc.) are now `bool` instead of `bool | None`
+- `sauna_type` field changed from `int | None` to `SaunaType | int` (enum for known types, raw int for unknown)
+- `fan_speed` field changed from `int | None` to `FanSpeed | None` (returns enum member instead of raw int)
+- Removed synchronous `close()` method; use `async_close()` instead
+- `SaunumTimeoutError` now also inherits from `TimeoutError`
+- `DEFAULT_TIMEOUT` changed from `int` (10) to `float` (10.0)
+
+### Added
+
+- `__repr__` method on `SaunumClient` for readable string representation
+- `DEFAULT_DURATION`, `DEFAULT_FAN_DURATION`, and `DEFAULT_FAN_SPEED` to module exports
+- Host validation in `SaunumClient.__init__`; raises `ValueError` for empty or blank hosts
+- `SaunumTimeoutError` raised on connection timeout (previously only `SaunumConnectionError`)
+- `NullHandler` added to package-level logger instead of client module logger
+
+### Changed
+
+- `_validate_registers` refactored from static method to module-level function
+- Timeout parameter type changed from `int` to `float` across `__init__` and `create`
+- `async_close()` simplified to call `self._client.close()` directly
+- `__aenter__` return type changed from `SaunumClient` to `Self`
+- `__aexit__` parameter type changed from `*args: Any` to `*args: object`
+- All post-action log messages downgraded from `info` to `debug` level (session start/stop, temperature set, duration set, fan speed set, sauna type set, light control, connect, disconnect)
+- Heater elements register comment updated to remove `(0-3)` constraint
+- Ruff target version updated from `py311` to `py312` in `pyproject.toml`
+
+### Removed
+
+- Synchronous `close()` method with event loop detection logic
+- `mock_register_responses` fixture from `tests/conftest.py`
+- `asyncio`, `inspect`, and `threading` imports no longer needed in client
+
+### Developer Experience
+
+- CI coverage threshold raised from 95% to 100%
+- Added `from __future__ import annotations` to all source modules
+- Simplified and consolidated test suite
+
 ## [0.5.0] - 2026-02-11
 
 ### Breaking Changes
@@ -156,7 +201,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - pymodbus >= 3.11.2
 
-[Unreleased]: https://github.com/mettolen/pysaunum/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/mettolen/pysaunum/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/mettolen/pysaunum/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/mettolen/pysaunum/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/mettolen/pysaunum/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/mettolen/pysaunum/releases/tag/v0.3.0
