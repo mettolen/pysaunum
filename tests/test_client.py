@@ -120,7 +120,7 @@ async def test_get_data_success(mock_modbus_client: MagicMock) -> None:
     assert data.target_temperature == 80
     assert data.fan_speed == 2  # Medium speed
     assert data.light_on is True
-    assert data.current_temperature == 75.0
+    assert data.current_temperature == 75
     assert data.on_time == (1800 << 16) + 900  # Combined 32-bit value
     assert data.heater_elements_active == 1  # 1 heater element active
     assert data.door_open is False
@@ -163,7 +163,7 @@ async def test_get_data_negative_current_temperature(
     client = SaunumClient(host="192.168.1.100")
     data = await client.async_get_data()
 
-    assert data.current_temperature == -1.0
+    assert data.current_temperature == -1
 
 
 async def test_get_data_not_connected(mock_modbus_client: MagicMock) -> None:
@@ -403,7 +403,7 @@ async def test_get_data_invalid_data(mock_modbus_client: MagicMock) -> None:
 
 
 async def test_get_data_high_target_temperature(
-    mock_modbus_client: MagicMock, caplog: pytest.LogCaptureFixture
+    mock_modbus_client: MagicMock,
 ) -> None:
     """Test get_data with target temperature above maximum."""
     mock_modbus_client.connected = True
@@ -433,8 +433,7 @@ async def test_get_data_high_target_temperature(
     client = SaunumClient(host="192.168.1.100")
     data = await client.async_get_data()
 
-    # Should log warning and still set the temperature
-    assert "exceeds maximum" in caplog.text
+    # Raw value is passed through even if above the valid 40-100 range
     assert data.target_temperature == 150
 
 

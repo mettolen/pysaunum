@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any, Self, cast
 
@@ -106,6 +107,9 @@ class SaunumClient:
             port=port,
             timeout=timeout,
         )
+        # Serialize Modbus I/O so concurrent read/write calls don't interleave
+        # transactions on the same TCP connection.
+        self._lock = asyncio.Lock()
 
     @classmethod
     async def create(
@@ -212,31 +216,36 @@ class SaunumClient:
         _LOGGER.debug("Fetching data from %s:%s", self._host, self._port)
 
         try:
-            # Read control parameters (registers 0-6)
-            control_result = await self._client.read_holding_registers(
-                address=REG_SESSION_ACTIVE,
-                count=7,
-                device_id=self._device_id,
-            )
-            control_regs = _validate_registers(
-                "control", control_result, expected_count=7
-            )
+            async with self._lock:
+                # Read control parameters (registers 0-6)
+                control_result = await self._client.read_holding_registers(
+                    address=REG_SESSION_ACTIVE,
+                    count=7,
+                    device_id=self._device_id,
+                )
+                control_regs = _validate_registers(
+                    "control", control_result, expected_count=7
+                )
 
-            # Read status sensors (registers 100-104)
-            status_result = await self._client.read_holding_registers(
-                address=REG_CURRENT_TEMP,
-                count=5,
-                device_id=self._device_id,
-            )
-            status_regs = _validate_registers("status", status_result, expected_count=5)
+                # Read status sensors (registers 100-104)
+                status_result = await self._client.read_holding_registers(
+                    address=REG_CURRENT_TEMP,
+                    count=5,
+                    device_id=self._device_id,
+                )
+                status_regs = _validate_registers(
+                    "status", status_result, expected_count=5
+                )
 
-            # Read alarm status (registers 200-205)
-            alarm_result = await self._client.read_holding_registers(
-                address=REG_ALARM_DOOR_OPEN,
-                count=6,
-                device_id=self._device_id,
-            )
-            alarm_regs = _validate_registers("alarm", alarm_result, expected_count=6)
+                # Read alarm status (registers 200-205)
+                alarm_result = await self._client.read_holding_registers(
+                    address=REG_ALARM_DOOR_OPEN,
+                    count=6,
+                    device_id=self._device_id,
+                )
+                alarm_regs = _validate_registers(
+                    "alarm", alarm_result, expected_count=6
+                )
 
             # Parse control parameters
             session_active = bool(control_regs[0])
@@ -249,14 +258,8 @@ class SaunumClient:
             sauna_duration = control_regs[2]
             fan_duration = control_regs[3]
 
-            # Validate target temperature
+            # Raw value is passed through; validation only applies when writing.
             target_temp = control_regs[4]
-            if target_temp > MAX_TEMPERATURE:
-                _LOGGER.warning(
-                    "Target temperature %d°C exceeds maximum %d°C",
-                    target_temp,
-                    MAX_TEMPERATURE,
-                )
 
             fan_speed_raw = control_regs[5]
             fan_speed: FanSpeed | None
@@ -270,7 +273,7 @@ class SaunumClient:
             light_on = bool(control_regs[6])
 
             # Parse status sensors
-            current_temp = float(_decode_int16(status_regs[0]))
+            current_temp = _decode_int16(status_regs[0])
 
             # Combine 32-bit on time from two 16-bit registers
             on_time = (status_regs[1] << 16) | status_regs[2]
@@ -326,7 +329,7 @@ class SaunumClient:
             raise SaunumCommunicationError(
                 f"Modbus communication error: {err}"
             ) from err
-        except (IndexError, KeyError, ValueError) as err:
+        except (IndexError, ValueError) as err:
             _LOGGER.debug(
                 "Invalid data received from %s:%s: %s", self._host, self._port, err
             )
@@ -522,16 +525,12 @@ class SaunumClient:
         _LOGGER.debug("Writing register %d = %d", address, value)
 
         try:
-            result = await self._client.write_register(
-                address=address,
-                value=value,
-                device_id=self._device_id,
-            )
-            if result.isError():
-                raise SaunumCommunicationError(
-                    f"Failed to write register {address}: {result}"
+            async with self._lock:
+                result = await self._client.write_register(
+                    address=address,
+                    value=value,
+                    device_id=self._device_id,
                 )
-
         except TimeoutError as err:
             _LOGGER.debug("Timeout writing register %d", address)
             raise SaunumTimeoutError(
@@ -542,6 +541,11 @@ class SaunumClient:
             raise SaunumCommunicationError(
                 f"Modbus error writing register {address}: {err}"
             ) from err
+
+        if result.isError():
+            raise SaunumCommunicationError(
+                f"Failed to write register {address}: {result}"
+            )
 
     async def async_close(self) -> None:
         """Close the connection to the sauna controller."""

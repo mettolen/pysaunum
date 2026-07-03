@@ -40,7 +40,7 @@ class SaunumData:
     """Whether the light is on."""
 
     # Status sensors
-    current_temperature: float
+    current_temperature: int
     """Current temperature in Celsius, 1°C resolution."""
 
     on_time: int
