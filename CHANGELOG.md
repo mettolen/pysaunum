@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-07-03
+
+### Breaking Changes
+
+- `SaunumData.current_temperature` type changed from `float` to `int` (the device only reports whole-degree Celsius values)
+
+### Fixed
+
+- Corrected `MAX_FAN_DURATION` from 30 to 15 minutes to match the controller's actual supported range
+- Removed dead `KeyError` handler from `async_get_data` (no dict lookups occur in the try block)
+- Serialized concurrent Modbus I/O with an internal `asyncio.Lock` so overlapping read/write calls no longer risk interleaving transactions on the shared TCP connection
+
+### Changed
+
+- `async_get_data` no longer logs a warning when the target-temperature register exceeds `MAX_TEMPERATURE`; the raw value is passed through unchanged (consistent with the existing behavior for below-range values)
+- CI: bump `actions/checkout` from 6 to 7
+- CI: bump `codecov/codecov-action` from 5 to 7
+
 ## [0.6.0] - 2026-02-28
 
 ### Breaking Changes
@@ -201,10 +219,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - pymodbus >= 3.11.2
 
-[Unreleased]: https://github.com/mettolen/pysaunum/compare/v0.6.0...HEAD
-[0.6.0]: https://github.com/mettolen/pysaunum/compare/v0.5.0...v0.6.0
-[0.5.0]: https://github.com/mettolen/pysaunum/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/mettolen/pysaunum/compare/v0.3.0...v0.4.0
+[Unreleased]: https://github.com/mettolen/pysaunum/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/mettolen/pysaunum/releases/tag/v0.7.0
+[0.6.0]: https://github.com/mettolen/pysaunum/releases/tag/v0.6.0
+[0.5.0]: https://github.com/mettolen/pysaunum/releases/tag/v0.5.0
+[0.4.0]: https://github.com/mettolen/pysaunum/releases/tag/v0.4.0
 [0.3.0]: https://github.com/mettolen/pysaunum/releases/tag/v0.3.0
 [0.2.0]: https://github.com/mettolen/pysaunum/releases/tag/v0.2.0
 [0.1.0]: https://github.com/mettolen/pysaunum/releases/tag/v0.1.0
