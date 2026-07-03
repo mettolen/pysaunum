@@ -64,7 +64,7 @@ MAX_DURATION: Final = 720  # Maximum session duration (minutes)
 DEFAULT_DURATION: Final = 120  # Default session duration (minutes)
 
 MIN_FAN_DURATION: Final = 0  # Minimum fan duration (minutes)
-MAX_FAN_DURATION: Final = 30  # Maximum fan duration (minutes)
+MAX_FAN_DURATION: Final = 15  # Maximum fan duration (minutes)
 DEFAULT_FAN_DURATION: Final = 10  # Default fan duration (minutes)
 
 MIN_FAN_SPEED: Final = 0  # Minimum fan speed (Off)

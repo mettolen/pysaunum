@@ -680,14 +680,14 @@ async def test_set_fan_duration_zero(mock_modbus_client: MagicMock) -> None:
 
 
 async def test_set_fan_duration_max(mock_modbus_client: MagicMock) -> None:
-    """Test setting fan duration to maximum (30)."""
+    """Test setting fan duration to maximum (15)."""
     mock_modbus_client.connected = True
 
     client = SaunumClient(host="192.168.1.100")
-    await client.async_set_fan_duration(30)
+    await client.async_set_fan_duration(15)
 
     mock_modbus_client.write_register.assert_called_once_with(
-        address=3, value=30, device_id=1
+        address=3, value=15, device_id=1
     )
 
 
@@ -697,8 +697,8 @@ async def test_set_fan_duration_invalid_high(mock_modbus_client: MagicMock) -> N
 
     client = SaunumClient(host="192.168.1.100")
 
-    with pytest.raises(ValueError, match="Fan duration 31 minutes out of range"):
-        await client.async_set_fan_duration(31)
+    with pytest.raises(ValueError, match="Fan duration 16 minutes out of range"):
+        await client.async_set_fan_duration(16)
 
 
 async def test_set_fan_duration_invalid_negative(mock_modbus_client: MagicMock) -> None:

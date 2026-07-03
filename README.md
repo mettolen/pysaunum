@@ -21,7 +21,7 @@ This library is used by the [Saunum](https://www.home-assistant.io/integrations/
 - 🏠 **Sauna type** configuration (Type 1, 2, or 3 with 0-indexed values)
 - 🌡️ **Temperature control** with zero-value support (40-100°C range, 0 = type defined)
 - ⏱️ **Session management** with configurable duration (0-720 minutes, default 120, 0 = type defined)
-- ⏲️ **Fan duration** control (0-30 minutes, 0 = type defined)
+- ⏲️ **Fan duration** control (0-15 minutes, 0 = type defined)
 - 💨 **Fan control** with discrete speeds (0=Off, 1=Low, 2=Medium, 3=High)
 - 💡 **Light control** for sauna lighting
 - 🔥 **Heater monitoring** with element count (0-3 active elements)
@@ -151,7 +151,7 @@ from pysaunum.const import (
     MAX_DURATION,       # 720 minutes (12 hours)
     DEFAULT_DURATION,   # 120 minutes (2 hours)
     MIN_FAN_DURATION,   # 0 minutes
-    MAX_FAN_DURATION,   # 30 minutes
+    MAX_FAN_DURATION,   # 15 minutes
 )
 
 # Fan speed values are IntEnum members
@@ -176,7 +176,7 @@ assert SaunaType.TYPE_3 == 2
 | `async_set_target_temperature(temp)` | Set target temperature      | `temp: int` (0, 40-100°C) |
 | `async_set_sauna_duration(minutes)`  | Set session duration        | `minutes: int` (0-720)    |
 | `async_set_fan_speed(speed)`         | Set fan speed               | `speed: int` (0-3)        |
-| `async_set_fan_duration(minutes)`    | Set fan duration            | `minutes: int` (0-30)     |
+| `async_set_fan_duration(minutes)`    | Set fan duration            | `minutes: int` (0-15)     |
 | `async_set_sauna_type(type)`         | Set sauna type              | `type: int` (0-2)         |
 | `async_set_light_control(enabled)`   | Control sauna light         | `enabled: bool`           |
 
@@ -287,7 +287,7 @@ The library maintains **100% test coverage** with comprehensive tests including:
 This library is tested and compatible with:
 
 - Saunum sauna controllers with Modbus TCP interface
-  - Tested with control panel v1.1.24 and power unit v1.1.43
+  - Tested with control panel v1.1.49 and power unit v1.1.49
 - Home Assistant integration
 - Python 3.12, 3.13+
 
