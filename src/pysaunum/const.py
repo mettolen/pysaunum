@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 from typing import Final
 
 __all__ = [
@@ -22,6 +22,7 @@ __all__ = [
     "MAX_FAN_SPEED",
     "DEFAULT_FAN_SPEED",
     "FanSpeed",
+    "SaunaSessionState",
     "SaunaType",
 ]
 
@@ -34,7 +35,7 @@ DEFAULT_TIMEOUT: Final = 10.0  # seconds
 REG_SESSION_ACTIVE: Final = 0  # Session on/off control 0=Off, 1=On
 REG_SAUNA_TYPE: Final = 1  # Sauna type setting (0-2)
 REG_SAUNA_DURATION: Final = 2  # Session duration in minutes (0-720), 0=type defined
-REG_FAN_DURATION: Final = 3  # Fan duration in minutes (0-30), 0=type defined
+REG_FAN_DURATION: Final = 3  # Fan duration in minutes (0-15), 0=type defined
 REG_TARGET_TEMPERATURE: Final = 4  # Temperature setpoint in °C (40-100), 0=type defined
 REG_FAN_SPEED: Final = 5  # Fan speed setting (0-3), 0=Off, 1=Low, 2=Medium, 3=High
 REG_LIGHT_CONTROL: Final = 6  # Light on/off control (0=Off, 1=On)
@@ -89,6 +90,14 @@ class SaunaType(IntEnum):
     TYPE_1 = 0
     TYPE_2 = 1
     TYPE_3 = 2
+
+
+class SaunaSessionState(StrEnum):
+    """Sauna session operating states."""
+
+    INACTIVE = "inactive"
+    HEATING = "heating"
+    COOLDOWN = "cooldown"
 
 
 # Status values

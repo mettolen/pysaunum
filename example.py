@@ -21,7 +21,7 @@ from pysaunum.const import (
     SaunaType,
 )
 
-HOST = "192.168.1.143"
+HOST = "192.168.1.141"
 
 
 def _print_state(data: SaunumData) -> None:
@@ -76,60 +76,60 @@ async def main() -> None:
         data = await client.async_get_data()
         _print_state(data)
 
-        # Example: Configure sauna settings
-        print("\nConfiguring sauna settings...")
+        # # Example: Configure sauna settings
+        # print("\nConfiguring sauna settings...")
 
-        # Set sauna type (0=Type 1, 1=Type 2, 2=Type 3)
-        print(f"Setting sauna type to Type 2 (value {SaunaType.TYPE_2})...")
-        await client.async_set_sauna_type(SaunaType.TYPE_2)
+        # # Set sauna type (0=Type 1, 1=Type 2, 2=Type 3)
+        # print(f"Setting sauna type to Type 2 (value {SaunaType.TYPE_2})...")
+        # await client.async_set_sauna_type(SaunaType.TYPE_2)
 
-        # Set target temperature (0 for type default, or 40-100°C)
-        print("Setting target temperature to 85°C...")
-        await client.async_set_target_temperature(85)
+        # # Set target temperature (0 for type default, or 40-100°C)
+        # print("Setting target temperature to 85°C...")
+        # await client.async_set_target_temperature(85)
 
-        # Set session duration (0-720 minutes, 0 for type default)
-        print(f"Setting session duration to {DEFAULT_DURATION} minutes...")
-        await client.async_set_sauna_duration(DEFAULT_DURATION)
+        # # Set session duration (0-720 minutes, 0 for type default)
+        # print(f"Setting session duration to {DEFAULT_DURATION} minutes...")
+        # await client.async_set_sauna_duration(DEFAULT_DURATION)
 
-        # Set fan speed (0=Off, 1=Low, 2=Medium, 3=High)
-        print(f"Setting fan speed to Medium ({FanSpeed.MEDIUM})...")
-        await client.async_set_fan_speed(FanSpeed.MEDIUM)
+        # # Set fan speed (0=Off, 1=Low, 2=Medium, 3=High)
+        # print(f"Setting fan speed to Medium ({FanSpeed.MEDIUM})...")
+        # await client.async_set_fan_speed(FanSpeed.MEDIUM)
 
-        # Set fan duration (0-30 minutes, 0 for type default)
-        print("Setting fan duration to 15 minutes...")
-        await client.async_set_fan_duration(15)
+        # # Set fan duration (0-15 minutes, 0 for type default)
+        # print("Setting fan duration to 15 minutes...")
+        # await client.async_set_fan_duration(15)
 
-        # Start a sauna session
-        print("\nStarting sauna session...")
-        await client.async_start_session()
+        # # Start a sauna session
+        # print("\nStarting sauna session...")
+        # await client.async_start_session()
 
-        await asyncio.sleep(2)
+        # await asyncio.sleep(2)
 
-        # Read updated state
-        print("\nReading updated state after configuration...")
-        data = await client.async_get_data()
-        _print_state(data)
+        # # Read updated state
+        # print("\nReading updated state after configuration...")
+        # data = await client.async_get_data()
+        # _print_state(data)
 
-        # Demonstrate fan speed control
-        print("\nDemonstrating fan speed control...")
-        for speed in (FanSpeed.OFF, FanSpeed.LOW, FanSpeed.HIGH, FanSpeed.OFF):
-            print(f"Setting fan to {speed.name.capitalize()}...")
-            await client.async_set_fan_speed(speed)
-            await asyncio.sleep(2)
+        # # Demonstrate fan speed control
+        # print("\nDemonstrating fan speed control...")
+        # for speed in (FanSpeed.OFF, FanSpeed.LOW, FanSpeed.HIGH, FanSpeed.OFF):
+        #     print(f"Setting fan to {speed.name.capitalize()}...")
+        #     await client.async_set_fan_speed(speed)
+        #     await asyncio.sleep(2)
 
-        # Stop the session
-        print("\nStopping session...")
-        await client.async_stop_session()
+        # # Stop the session
+        # print("\nStopping session...")
+        # await client.async_stop_session()
 
-        await asyncio.sleep(2)
+        # await asyncio.sleep(2)
 
-        # Demonstrate light control
-        print("\nTesting light control...")
-        await client.async_set_light_control(True)
-        print("Light turned on")
-        await asyncio.sleep(2)
-        await client.async_set_light_control(False)
-        print("Light turned off")
+        # # Demonstrate light control
+        # print("\nTesting light control...")
+        # await client.async_set_light_control(True)
+        # print("Light turned on")
+        # await asyncio.sleep(2)
+        # await client.async_set_light_control(False)
+        # print("Light turned off")
 
     except SaunumConnectionError as err:
         print(f"Connection error: {err}")
@@ -223,7 +223,7 @@ if __name__ == "__main__":
     print("=" * 50)
     asyncio.run(main())
 
-    # Run context manager example
-    asyncio.run(main_with_context_manager())
+    # # Run context manager example
+    # asyncio.run(main_with_context_manager())
 
     print("\nExample completed!")

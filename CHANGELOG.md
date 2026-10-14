@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Added `SaunaSessionState` and `SaunumData.session_state` to distinguish inactive, heating, and cooldown states. The controller reports cooldown as an active session with a target temperature of 0°C.
+
 ## [0.7.0] - 2026-07-03
 
 ### Breaking Changes

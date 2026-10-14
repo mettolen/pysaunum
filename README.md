@@ -23,6 +23,7 @@ This library is used by the [Saunum](https://www.home-assistant.io/integrations/
 - ⏱️ **Session management** with configurable duration (0-720 minutes, default 120, 0 = type defined)
 - ⏲️ **Fan duration** control (0-15 minutes, 0 = type defined)
 - 💨 **Fan control** with discrete speeds (0=Off, 1=Low, 2=Medium, 3=High)
+- 🧊 **Cooldown detection** when the controller keeps the session active with a 0°C target
 - 💡 **Light control** for sauna lighting
 - 🔥 **Heater monitoring** with element count (0-3 active elements)
 - 🚨 **Alarm status** monitoring (door, temperature, sensor alarms)
@@ -55,6 +56,7 @@ async def main():
         print(f"Current temperature: {data.current_temperature}°C")
         print(f"Target temperature: {data.target_temperature}°C")
         print(f"Session active: {data.session_active}")
+        print(f"Session state: {data.session_state}")
         print(f"Heater elements active: {data.heater_elements_active}")
 
         # Start a sauna session with configuration
@@ -144,6 +146,9 @@ from pysaunum.const import (
     # Sauna type enum (IntEnum, 0-indexed)
     SaunaType,          # SaunaType.TYPE_1=0, TYPE_2=1, TYPE_3=2
 
+    # Normalized session state (StrEnum)
+    SaunaSessionState,  # INACTIVE, HEATING, or COOLDOWN
+
     # Limits
     MIN_TEMPERATURE,    # 40°C
     MAX_TEMPERATURE,    # 100°C
@@ -186,11 +191,12 @@ assert SaunaType.TYPE_3 == 2
 @dataclass(frozen=True)
 class SaunumData:
     # Session control
-    session_active: bool                   # Session status
-    sauna_type: SaunaType | int             # Sauna type enum (or raw int)
+    session_active: bool                   # Raw controller session status
+    session_state: SaunaSessionState       # Normalized operating state (property)
+    sauna_type: SaunaType | int            # Sauna type enum (or raw int)
     sauna_duration: int                    # Duration in minutes (0=type default)
     fan_duration: int                      # Fan duration in minutes (0=type default)
-    target_temperature: int                # Target temp in °C (0=type default)
+    target_temperature: int                # Target temp (0=type default/cooldown)
     fan_speed: FanSpeed | None             # Fan speed enum
     light_on: bool                         # Light status
 
@@ -292,6 +298,21 @@ This library is tested and compatible with:
 - Python 3.12, 3.13+
 
 ## Advanced Usage
+
+### Monitoring Session State
+
+```python
+from pysaunum import SaunaSessionState
+
+data = await client.async_get_data()
+
+if data.session_state is SaunaSessionState.COOLDOWN:
+    print("The heaters are off and the cooldown fan is active")
+```
+
+The controller reports cooldown as an active session with a target temperature
+of 0°C. `session_state` normalizes these raw register values while
+`session_active` and `target_temperature` remain available unchanged.
 
 ### Monitoring Heater Elements
 

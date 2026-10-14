@@ -22,6 +22,7 @@ from .const import (
     MIN_FAN_SPEED,
     MIN_TEMPERATURE,
     FanSpeed,
+    SaunaSessionState,
     SaunaType,
 )
 from .exceptions import (
@@ -60,5 +61,6 @@ __all__ = [
     "MIN_FAN_SPEED",
     "MAX_FAN_SPEED",
     "FanSpeed",
+    "SaunaSessionState",
     "SaunaType",
 ]

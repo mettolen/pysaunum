@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .const import FanSpeed, SaunaType
+from .const import FanSpeed, SaunaSessionState, SaunaType
 
 __all__ = ["SaunumData"]
 
@@ -28,10 +28,10 @@ class SaunumData:
     """Session duration in minutes (1-720), or 0 for sauna type default."""
 
     fan_duration: int
-    """Fan duration in minutes (1-30), or 0 for sauna type default."""
+    """Fan duration in minutes (1-15), or 0 for sauna type default."""
 
     target_temperature: int
-    """Target temperature in Celsius (40-100), or 0 for sauna type default."""
+    """Target temperature in Celsius, or 0 for a type default or cooldown."""
 
     fan_speed: FanSpeed | None
     """Fan speed enum member, or None if the raw value was unrecognized."""
@@ -70,3 +70,12 @@ class SaunumData:
 
     alarm_temp_sensor_open: bool
     """Alarm: temperature sensor not connected."""
+
+    @property
+    def session_state(self) -> SaunaSessionState:
+        """Return the normalized session operating state."""
+        if not self.session_active:
+            return SaunaSessionState.INACTIVE
+        if self.target_temperature == 0:
+            return SaunaSessionState.COOLDOWN
+        return SaunaSessionState.HEATING
