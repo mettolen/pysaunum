@@ -18,11 +18,11 @@ This library is used by the [Saunum](https://www.home-assistant.io/integrations/
 ## Features
 
 - 🔌 **Async/await support** using asyncio with comprehensive error handling
-- 🏠 **Sauna type** configuration (Type 1, 2, or 3 with 0-indexed values)
+- 🏠 **Sauna preset** configuration using device-dependent, 0-indexed values
 - 🌡️ **Temperature control** with zero-value support (40-100°C range, 0 = type defined)
-- ⏱️ **Session management** with configurable duration (0-720 minutes, default 120, 0 = type defined)
-- ⏲️ **Fan duration** control (0-15 minutes, 0 = type defined)
-- 💨 **Fan control** with discrete speeds (0=Off, 1=Low, 2=Medium, 3=High)
+- ⏱️ **Session management** with configurable duration (60-1080 minutes, default 120, 0 = type defined)
+- ⏲️ **Fan duration** control (0-20 minutes, 0 = type defined)
+- 💨 **Fan control** with discrete speeds (0=Default/Off, 1=Low, 2=Medium, 3=High)
 - 🧊 **Cooldown detection** when the controller keeps the session active with a 0°C target
 - 💡 **Light control** for sauna lighting
 - 🔥 **Heater monitoring** with element count (0-3 active elements)
@@ -153,7 +153,7 @@ from pysaunum.const import (
     # Fan speed enum (IntEnum)
     FanSpeed,           # FanSpeed.OFF=0, LOW=1, MEDIUM=2, HIGH=3
 
-    # Sauna type enum (IntEnum, 0-indexed)
+    # Convenience labels for the first three preset indices
     SaunaType,          # SaunaType.TYPE_1=0, TYPE_2=1, TYPE_3=2
 
     # Normalized session state (StrEnum)
@@ -162,11 +162,11 @@ from pysaunum.const import (
     # Limits
     MIN_TEMPERATURE,    # 40°C
     MAX_TEMPERATURE,    # 100°C
-    MIN_DURATION,       # 0 minutes
-    MAX_DURATION,       # 720 minutes (12 hours)
+    MIN_DURATION,       # 60 minutes (minimum non-default duration)
+    MAX_DURATION,       # 1080 minutes (18 hours)
     DEFAULT_DURATION,   # 120 minutes (2 hours)
     MIN_FAN_DURATION,   # 0 minutes
-    MAX_FAN_DURATION,   # 15 minutes
+    MAX_FAN_DURATION,   # 20 minutes
 )
 
 # Fan speed values are IntEnum members
@@ -174,7 +174,7 @@ assert FanSpeed.OFF == 0
 assert FanSpeed.HIGH == 3
 assert 2 in FanSpeed  # Membership testing
 
-# Sauna type values are IntEnum members
+# The available preset count is device-dependent; these are convenience labels
 assert SaunaType.TYPE_1 == 0
 assert SaunaType.TYPE_3 == 2
 ```
@@ -183,17 +183,20 @@ assert SaunaType.TYPE_3 == 2
 
 ### Main Client Methods
 
-| Method                               | Description                 | Parameters                |
-| ------------------------------------ | --------------------------- | ------------------------- |
-| `async_get_data()`                   | Read all current sauna data | None                      |
-| `async_start_session()`              | Start sauna session         | None                      |
-| `async_stop_session()`               | Stop sauna session          | None                      |
-| `async_set_target_temperature(temp)` | Set target temperature      | `temp: int` (0, 40-100°C) |
-| `async_set_sauna_duration(minutes)`  | Set session duration        | `minutes: int` (0-720)    |
-| `async_set_fan_speed(speed)`         | Set fan speed               | `speed: int` (0-3)        |
-| `async_set_fan_duration(minutes)`    | Set fan duration            | `minutes: int` (0-15)     |
-| `async_set_sauna_type(type)`         | Set sauna type              | `type: int` (0-2)         |
-| `async_set_light_control(enabled)`   | Control sauna light         | `enabled: bool`           |
+| Method                               | Description                 | Parameters                              |
+| ------------------------------------ | --------------------------- | --------------------------------------- |
+| `async_get_data()`                   | Read all current sauna data | None                                    |
+| `async_start_session()`              | Start sauna session         | None                                    |
+| `async_stop_session()`               | Stop sauna session          | None                                    |
+| `async_set_target_temperature(temp)` | Set target temperature      | `temp: int` (0, 40-100°C)               |
+| `async_set_sauna_duration(minutes)`  | Set session duration        | `minutes: int` (0, 60-1080)             |
+| `async_set_fan_speed(speed)`         | Set fan speed               | `speed: int` (0-3)                      |
+| `async_set_fan_duration(minutes)`    | Set fan duration            | `minutes: int` (0-20)                   |
+| `async_set_sauna_type(type)`         | Set sauna preset            | `type: int` (0 to device-dependent N-1) |
+| `async_set_light_control(enabled)`   | Control sauna light         | `enabled: bool`                         |
+
+Before a session starts, fan speed `0` selects the sauna preset default and
+speeds `1-3` configure the next Modbus-started session. During an active session or cooldown, `0` turns the fan off and `1-3` changes its speed.
 
 ### Data Model (SaunumData)
 
@@ -203,9 +206,9 @@ class SaunumData:
     # Session control
     session_active: bool                   # Raw controller session status
     session_state: SaunaSessionState       # Normalized operating state (property)
-    sauna_type: SaunaType | int            # Sauna type enum (or raw int)
-    sauna_duration: int                    # Duration in minutes (0=type default)
-    fan_duration: int                      # Fan duration in minutes (0=type default)
+    sauna_type: SaunaType | int            # Device-dependent preset index
+    sauna_duration: int                    # 0 or 60-1080 minutes
+    fan_duration: int                      # 0-20 minutes
     target_temperature: int                # Target temp (0=type default/cooldown)
     fan_speed: FanSpeed | None             # Fan speed enum
     light_on: bool                         # Light status

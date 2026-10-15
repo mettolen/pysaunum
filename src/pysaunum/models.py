@@ -22,13 +22,13 @@ class SaunumData:
     """Whether a sauna session is currently active."""
 
     sauna_type: SaunaType | int
-    """Sauna type. A SaunaType enum member for known types, or raw int for unknown."""
+    """Device-dependent preset index, with a SaunaType label when available."""
 
     sauna_duration: int
-    """Session duration in minutes (1-720), or 0 for sauna type default."""
+    """Session duration in minutes (60-1080), or 0 for sauna type default."""
 
     fan_duration: int
-    """Fan duration in minutes (1-15), or 0 for sauna type default."""
+    """Fan duration in minutes (1-20), or 0 for sauna type default."""
 
     target_temperature: int
     """Target temperature in Celsius, or 0 for a type default or cooldown."""

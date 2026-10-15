@@ -534,8 +534,8 @@ async def test_set_sauna_duration_invalid(mock_modbus_client: MagicMock) -> None
 
     client = SaunumClient(host="192.168.1.100")
 
-    with pytest.raises(ValueError, match="Duration 800 minutes out of range"):
-        await client.async_set_sauna_duration(800)
+    with pytest.raises(ValueError, match="Duration 1081 minutes out of range"):
+        await client.async_set_sauna_duration(1081)
 
 
 async def test_set_sauna_duration_invalid_negative(
@@ -551,26 +551,38 @@ async def test_set_sauna_duration_invalid_negative(
 
 
 async def test_set_sauna_duration_min_valid(mock_modbus_client: MagicMock) -> None:
-    """Test setting minimum valid sauna duration (1 minute)."""
+    """Test setting minimum valid non-default sauna duration."""
     mock_modbus_client.connected = True
 
     client = SaunumClient(host="192.168.1.100")
-    await client.async_set_sauna_duration(1)
+    await client.async_set_sauna_duration(60)
 
     mock_modbus_client.write_register.assert_called_once_with(
-        address=2, value=1, device_id=1
+        address=2, value=60, device_id=1
     )
 
 
-async def test_set_sauna_duration_max_valid(mock_modbus_client: MagicMock) -> None:
-    """Test setting maximum valid sauna duration (720 minutes / 12 hours)."""
+async def test_set_sauna_duration_below_min_invalid(
+    mock_modbus_client: MagicMock,
+) -> None:
+    """Test rejecting a non-default sauna duration below 60 minutes."""
     mock_modbus_client.connected = True
 
     client = SaunumClient(host="192.168.1.100")
-    await client.async_set_sauna_duration(720)
+
+    with pytest.raises(ValueError, match="Duration 59 minutes out of range"):
+        await client.async_set_sauna_duration(59)
+
+
+async def test_set_sauna_duration_max_valid(mock_modbus_client: MagicMock) -> None:
+    """Test setting maximum valid public sauna duration."""
+    mock_modbus_client.connected = True
+
+    client = SaunumClient(host="192.168.1.100")
+    await client.async_set_sauna_duration(1080)
 
     mock_modbus_client.write_register.assert_called_once_with(
-        address=2, value=720, device_id=1
+        address=2, value=1080, device_id=1
     )
 
 
@@ -609,13 +621,13 @@ async def test_set_sauna_type_valid(mock_modbus_client: MagicMock) -> None:
 
 
 async def test_set_sauna_type_invalid(mock_modbus_client: MagicMock) -> None:
-    """Test setting invalid sauna type."""
+    """Test setting a negative sauna preset index."""
     mock_modbus_client.connected = True
 
     client = SaunumClient(host="192.168.1.100")
 
-    with pytest.raises(ValueError, match="Sauna type 3 invalid"):
-        await client.async_set_sauna_type(3)
+    with pytest.raises(ValueError, match="Sauna type -1 invalid"):
+        await client.async_set_sauna_type(-1)
 
 
 async def test_set_sauna_type_2_valid(mock_modbus_client: MagicMock) -> None:
@@ -639,6 +651,20 @@ async def test_set_sauna_type_3_valid(mock_modbus_client: MagicMock) -> None:
 
     mock_modbus_client.write_register.assert_called_once_with(
         address=1, value=2, device_id=1
+    )
+
+
+async def test_set_device_dependent_sauna_type_valid(
+    mock_modbus_client: MagicMock,
+) -> None:
+    """Test setting a preset index beyond the convenience enum."""
+    mock_modbus_client.connected = True
+
+    client = SaunumClient(host="192.168.1.100")
+    await client.async_set_sauna_type(3)
+
+    mock_modbus_client.write_register.assert_called_once_with(
+        address=1, value=3, device_id=1
     )
 
 
@@ -679,14 +705,14 @@ async def test_set_fan_duration_zero(mock_modbus_client: MagicMock) -> None:
 
 
 async def test_set_fan_duration_max(mock_modbus_client: MagicMock) -> None:
-    """Test setting fan duration to maximum (15)."""
+    """Test setting fan duration to maximum (20)."""
     mock_modbus_client.connected = True
 
     client = SaunumClient(host="192.168.1.100")
-    await client.async_set_fan_duration(15)
+    await client.async_set_fan_duration(20)
 
     mock_modbus_client.write_register.assert_called_once_with(
-        address=3, value=15, device_id=1
+        address=3, value=20, device_id=1
     )
 
 
@@ -696,8 +722,8 @@ async def test_set_fan_duration_invalid_high(mock_modbus_client: MagicMock) -> N
 
     client = SaunumClient(host="192.168.1.100")
 
-    with pytest.raises(ValueError, match="Fan duration 16 minutes out of range"):
-        await client.async_set_fan_duration(16)
+    with pytest.raises(ValueError, match="Fan duration 21 minutes out of range"):
+        await client.async_set_fan_duration(21)
 
 
 async def test_set_fan_duration_invalid_negative(mock_modbus_client: MagicMock) -> None:

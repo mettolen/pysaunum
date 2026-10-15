@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `SaunaSessionState` and `SaunumData.session_state` to distinguish inactive, heating, and cooldown states. The controller reports cooldown as an active session with a target temperature of 0°C.
 
+### Changed
+
+- Sauna types are now treated as device-dependent, zero-based preset indices; `SaunaType` remains available as convenience labels for the first three indices.
+- Session duration validation now accepts `0` for the preset default or `60-1080` minutes, including the extended range for public saunas.
+- Fan operating time now supports `0-20` minutes.
+- Documented the different fan speed `0` semantics before a session and during an active session or cooldown.
+
 ## [0.7.0] - 2026-07-03
 
 ### Breaking Changes

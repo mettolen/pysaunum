@@ -33,9 +33,9 @@ DEFAULT_TIMEOUT: Final = 10.0  # seconds
 
 # Modbus register addresses - Holding Registers (Read/Write Control Parameters)
 REG_SESSION_ACTIVE: Final = 0  # Session on/off control 0=Off, 1=On
-REG_SAUNA_TYPE: Final = 1  # Sauna type setting (0-2)
-REG_SAUNA_DURATION: Final = 2  # Session duration in minutes (0-720), 0=type defined
-REG_FAN_DURATION: Final = 3  # Fan duration in minutes (0-15), 0=type defined
+REG_SAUNA_TYPE: Final = 1  # Sauna preset index (0 to device-dependent N-1)
+REG_SAUNA_DURATION: Final = 2  # Session duration (60-1080 min), 0=type default
+REG_FAN_DURATION: Final = 3  # Fan duration in minutes (0-20), 0=type default
 REG_TARGET_TEMPERATURE: Final = 4  # Temperature setpoint in °C (40-100), 0=type defined
 REG_FAN_SPEED: Final = 5  # Fan speed setting (0-3), 0=Off, 1=Low, 2=Medium, 3=High
 REG_LIGHT_CONTROL: Final = 6  # Light on/off control (0=Off, 1=On)
@@ -60,12 +60,12 @@ MIN_TEMPERATURE: Final = 40
 MAX_TEMPERATURE: Final = 100
 DEFAULT_TEMPERATURE: Final = 80
 
-MIN_DURATION: Final = 0  # Minimum session duration (minutes)
-MAX_DURATION: Final = 720  # Maximum session duration (minutes)
+MIN_DURATION: Final = 60  # Minimum non-default session duration (minutes)
+MAX_DURATION: Final = 1080  # Maximum public sauna session duration (minutes)
 DEFAULT_DURATION: Final = 120  # Default session duration (minutes)
 
 MIN_FAN_DURATION: Final = 0  # Minimum fan duration (minutes)
-MAX_FAN_DURATION: Final = 15  # Maximum fan duration (minutes)
+MAX_FAN_DURATION: Final = 20  # Maximum fan duration (minutes)
 DEFAULT_FAN_DURATION: Final = 10  # Default fan duration (minutes)
 
 MIN_FAN_SPEED: Final = 0  # Minimum fan speed (Off)
@@ -85,7 +85,7 @@ class FanSpeed(IntEnum):
 
 # Sauna types
 class SaunaType(IntEnum):
-    """Sauna type settings."""
+    """Convenience labels for the first three sauna preset indices."""
 
     TYPE_1 = 0
     TYPE_2 = 1

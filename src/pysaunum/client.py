@@ -399,7 +399,8 @@ class SaunumClient:
         Args:
             minutes: Session duration in minutes.
                 - 0: Use sauna type's default duration
-                - 1-720: Specific duration in minutes (max 12 hours)
+                - 60-720: Private sauna duration
+                - 60-1080: Public sauna duration
 
         Raises:
             ValueError: If duration is out of range
@@ -410,10 +411,10 @@ class SaunumClient:
             Setting duration to 0 tells the controller to use the default
             duration defined for the currently selected sauna type.
         """
-        if not MIN_DURATION <= minutes <= MAX_DURATION:
+        if minutes != 0 and not MIN_DURATION <= minutes <= MAX_DURATION:
             raise ValueError(
                 f"Duration {minutes} minutes out of range "
-                f"({MIN_DURATION}-{MAX_DURATION})"
+                f"(0=type defined, {MIN_DURATION}-{MAX_DURATION})"
             )
 
         _LOGGER.debug("Setting sauna duration to %d minutes", minutes)
@@ -426,7 +427,7 @@ class SaunumClient:
         Args:
             minutes: Fan duration in minutes.
                 - 0: Use sauna type's default fan duration
-                - 1-30: Specific fan duration in minutes
+                - 1-20: Specific fan duration in minutes
 
         Raises:
             ValueError: If duration is out of range
@@ -452,7 +453,10 @@ class SaunumClient:
 
         Args:
             speed: Fan speed setting.
-                - 0: Fan off
+                - Before a session starts, 0 uses the sauna type default and
+                  1-3 sets the speed for the next Modbus-started session
+                - During an active session or cooldown, 0 turns the fan off
+                  and 1-3 sets the speed
                 - 1: Low speed
                 - 2: Medium speed
                 - 3: High speed
@@ -472,28 +476,25 @@ class SaunumClient:
         _LOGGER.debug("Fan speed set to %d", speed)
 
     async def async_set_sauna_type(self, sauna_type: int) -> None:
-        """Set the sauna type.
+        """Set the sauna preset.
 
         Args:
-            sauna_type: Sauna type setting.
-                - 0: Sauna type 1
-                - 1: Sauna type 2
-                - 2: Sauna type 3
+            sauna_type: Zero-based preset index. The number of presets is
+                device-dependent.
 
         Raises:
-            ValueError: If type is out of range
+            ValueError: If the preset index is negative
             SaunumConnectionError: If not connected
             SaunumCommunicationError: If write operation fails
 
         Note:
-            Each sauna type has predefined defaults for temperature, session
+            Each sauna preset has predefined defaults for temperature, session
             duration, and fan settings. Refer to your controller's manual for
-            specific type configurations.
+            the available preset indices and their configurations.
         """
-        if sauna_type not in SaunaType:
+        if sauna_type < 0:
             raise ValueError(
-                f"Sauna type {sauna_type} invalid. "
-                f"Use {SaunaType.TYPE_1}, {SaunaType.TYPE_2}, or {SaunaType.TYPE_3}"
+                f"Sauna type {sauna_type} invalid; use a non-negative index"
             )
 
         _LOGGER.debug("Setting sauna type to %d", sauna_type)
