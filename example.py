@@ -99,6 +99,19 @@ async def main() -> None:
         # print("Setting fan duration to 15 minutes...")
         # await client.async_set_fan_duration(15)
 
+        # # Configure AutoLeil when supported and connected
+        # from pysaunum import AutoLeilMode
+        #
+        # await client.async_set_autoleil_mode(AutoLeilMode.HUMIDITY)
+        # await client.async_set_autoleil_target_humidity(40)
+        # await client.async_set_autoleil_interval(10)
+        # await client.async_set_autoleil_water_amount(10)  # 1.0 second
+        # await client.async_set_autoleil_duration(120)
+        # await client.async_set_autoleil_ready_mode(True)
+        # await client.async_set_autoleil_auto_ventilation(True)
+        # await client.async_set_autoleil_button_use(True)
+        # await client.async_set_autoleil_button_timeout(60)
+
         # # Start a sauna session
         # print("\nStarting sauna session...")
         # await client.async_start_session()

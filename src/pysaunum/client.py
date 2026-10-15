@@ -10,16 +10,34 @@ from pymodbus.client import AsyncModbusTcpClient
 from pymodbus.exceptions import ModbusException
 
 from .const import (
+    AUTOLEIL_BUTTON_TIMEOUTS,
+    AUTOLEIL_DURATION_STEP,
+    AUTOLEIL_HUMIDITY_TEMPERATURE_SUM,
     DEFAULT_DEVICE_ID,
     DEFAULT_PORT,
     DEFAULT_TIMEOUT,
+    MAX_AUTOLEIL_DURATION,
+    MAX_AUTOLEIL_INTERVAL,
+    MAX_AUTOLEIL_WATER_AMOUNT,
     MAX_DURATION,
     MAX_FAN_DURATION,
     MAX_TEMPERATURE,
+    MIN_AUTOLEIL_DURATION,
+    MIN_AUTOLEIL_INTERVAL,
+    MIN_AUTOLEIL_WATER_AMOUNT,
     MIN_DURATION,
     MIN_FAN_DURATION,
     MIN_TEMPERATURE,
     REG_ALARM_DOOR_OPEN,
+    REG_AUTOLEIL_AUTO_VENTILATION,
+    REG_AUTOLEIL_BUTTON_TIMEOUT,
+    REG_AUTOLEIL_BUTTON_USE,
+    REG_AUTOLEIL_DURATION,
+    REG_AUTOLEIL_INTERVAL,
+    REG_AUTOLEIL_MODE,
+    REG_AUTOLEIL_READY_MODE,
+    REG_AUTOLEIL_TARGET_HUMIDITY,
+    REG_AUTOLEIL_WATER_AMOUNT,
     REG_CLOSE_COOLDOWN,
     REG_CURRENT_TEMP,
     REG_DISMISS_NOTIFICATIONS,
@@ -34,6 +52,7 @@ from .const import (
     SOFTWARE_RESTART_MAGIC,
     STATUS_OFF,
     STATUS_ON,
+    AutoLeilMode,
     FanSpeed,
     SaunaType,
 )
@@ -556,6 +575,133 @@ class SaunumClient:
         _LOGGER.debug("Dismissing notifications")
         await self._async_write_register(REG_DISMISS_NOTIFICATIONS, STATUS_ON)
         _LOGGER.debug("Notification dismissal requested")
+
+    async def async_set_autoleil_mode(self, mode: int) -> None:
+        """Set AutoLeil to humidity or interval mode."""
+        if mode not in AutoLeilMode:
+            raise ValueError(
+                f"AutoLeil mode {mode} out of range "
+                f"({AutoLeilMode.HUMIDITY}-{AutoLeilMode.INTERVAL})"
+            )
+        await self._async_write_register(REG_AUTOLEIL_MODE, mode)
+
+    async def async_set_autoleil_target_humidity(self, humidity: int) -> None:
+        """Set AutoLeil target relative humidity.
+
+        The maximum is 130 minus the controller's target temperature.
+        """
+        if humidity < 0:
+            raise ValueError("AutoLeil target humidity cannot be negative")
+
+        target_temperature = await self._async_read_register(REG_TARGET_TEMPERATURE)
+        if target_temperature != 0 and not (
+            MIN_TEMPERATURE <= target_temperature <= MAX_TEMPERATURE
+        ):
+            raise SaunumInvalidDataError(
+                f"Invalid target temperature {target_temperature}°C"
+            )
+
+        max_humidity = AUTOLEIL_HUMIDITY_TEMPERATURE_SUM - target_temperature
+        if humidity > max_humidity:
+            raise ValueError(
+                f"AutoLeil target humidity {humidity}% out of range "
+                f"(0-{max_humidity}% at {target_temperature}°C)"
+            )
+        await self._async_write_register(REG_AUTOLEIL_TARGET_HUMIDITY, humidity)
+
+    async def async_set_autoleil_interval(self, minutes: int) -> None:
+        """Set the automatic water throw interval in minutes."""
+        if not MIN_AUTOLEIL_INTERVAL <= minutes <= MAX_AUTOLEIL_INTERVAL:
+            raise ValueError(
+                f"AutoLeil interval {minutes} minutes out of range "
+                f"({MIN_AUTOLEIL_INTERVAL}-{MAX_AUTOLEIL_INTERVAL})"
+            )
+        await self._async_write_register(REG_AUTOLEIL_INTERVAL, minutes)
+
+    async def async_set_autoleil_water_amount(self, amount: int) -> None:
+        """Set water valve duration in tenths of a second."""
+        if not MIN_AUTOLEIL_WATER_AMOUNT <= amount <= MAX_AUTOLEIL_WATER_AMOUNT:
+            raise ValueError(
+                f"AutoLeil water amount {amount} out of range "
+                f"({MIN_AUTOLEIL_WATER_AMOUNT}-{MAX_AUTOLEIL_WATER_AMOUNT})"
+            )
+        await self._async_write_register(REG_AUTOLEIL_WATER_AMOUNT, amount)
+
+    async def async_set_autoleil_duration(self, minutes: int) -> None:
+        """Set AutoLeil duration in minutes.
+
+        The duration must use 30-minute steps and cannot exceed an explicitly
+        configured sauna session duration. When the session duration is 0, the
+        preset default is not discoverable and the controller enforces its limit.
+        """
+        if not MIN_AUTOLEIL_DURATION <= minutes <= MAX_AUTOLEIL_DURATION:
+            raise ValueError(
+                f"AutoLeil duration {minutes} minutes out of range "
+                f"({MIN_AUTOLEIL_DURATION}-{MAX_AUTOLEIL_DURATION})"
+            )
+        if minutes % AUTOLEIL_DURATION_STEP:
+            raise ValueError(
+                f"AutoLeil duration {minutes} minutes must use "
+                f"{AUTOLEIL_DURATION_STEP}-minute steps"
+            )
+
+        session_duration = await self._async_read_register(REG_SAUNA_DURATION)
+        if session_duration != 0 and minutes > session_duration:
+            raise ValueError(
+                f"AutoLeil duration {minutes} minutes exceeds session duration "
+                f"{session_duration} minutes"
+            )
+        await self._async_write_register(REG_AUTOLEIL_DURATION, minutes)
+
+    async def async_set_autoleil_ready_mode(self, enabled: bool) -> None:
+        """Enable or disable AutoLeil ready mode."""
+        await self._async_write_register(
+            REG_AUTOLEIL_READY_MODE, STATUS_ON if enabled else STATUS_OFF
+        )
+
+    async def async_set_autoleil_auto_ventilation(self, enabled: bool) -> None:
+        """Enable or disable AutoLeil automatic ventilation."""
+        await self._async_write_register(
+            REG_AUTOLEIL_AUTO_VENTILATION, STATUS_ON if enabled else STATUS_OFF
+        )
+
+    async def async_set_autoleil_button_use(self, enabled: bool) -> None:
+        """Enable or disable the physical AutoLeil button."""
+        await self._async_write_register(
+            REG_AUTOLEIL_BUTTON_USE, STATUS_ON if enabled else STATUS_OFF
+        )
+
+    async def async_set_autoleil_button_timeout(self, seconds: int) -> None:
+        """Set the physical AutoLeil button timeout in seconds."""
+        if seconds not in AUTOLEIL_BUTTON_TIMEOUTS:
+            allowed = ", ".join(str(timeout) for timeout in AUTOLEIL_BUTTON_TIMEOUTS)
+            raise ValueError(
+                f"AutoLeil button timeout {seconds} seconds invalid; use {allowed}"
+            )
+        await self._async_write_register(REG_AUTOLEIL_BUTTON_TIMEOUT, seconds)
+
+    async def _async_read_register(self, address: int) -> int:
+        """Read a single holding register."""
+        if not self._client.connected:
+            raise SaunumConnectionError("Not connected to sauna controller")
+
+        try:
+            async with self._lock:
+                result = await self._client.read_holding_registers(
+                    address=address,
+                    count=1,
+                    device_id=self._device_id,
+                )
+        except TimeoutError as err:
+            raise SaunumTimeoutError(
+                f"Timeout reading register {address} from {self._host}:{self._port}"
+            ) from err
+        except ModbusException as err:
+            raise SaunumCommunicationError(
+                f"Modbus error reading register {address}: {err}"
+            ) from err
+
+        return _validate_registers(f"register {address}", result, expected_count=1)[0]
 
     async def _async_write_register(self, address: int, value: int) -> None:
         """Write a single holding register.

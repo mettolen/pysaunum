@@ -26,6 +26,7 @@ This library is used by the [Saunum](https://www.home-assistant.io/integrations/
 - 🧊 **Cooldown detection** when the controller keeps the session active with a 0°C target
 - 💡 **Light control** for sauna lighting
 - 🛠️ **Controller actions** for software restart, closing cooldown, and dismissing notifications
+- 💧 **AutoLeil control** for humidity/interval modes, water throws, ventilation, and button settings
 - 🔥 **Heater monitoring** with element count (0-3 active elements)
 - 🚨 **Alarm status** monitoring (door, temperature, sensor alarms)
 - 🛡️ **Type hints** for better IDE support and development experience
@@ -151,6 +152,9 @@ asyncio.run(main())
 
 ```python
 from pysaunum.const import (
+    # AutoLeil mode enum (IntEnum)
+    AutoLeilMode,       # HUMIDITY=0, INTERVAL=1
+
     # Fan speed enum (IntEnum)
     FanSpeed,           # FanSpeed.OFF=0, LOW=1, MEDIUM=2, HIGH=3
 
@@ -184,25 +188,54 @@ assert SaunaType.TYPE_3 == 2
 
 ### Main Client Methods
 
-| Method                               | Description                 | Parameters                              |
-| ------------------------------------ | --------------------------- | --------------------------------------- |
-| `async_get_data()`                   | Read all current sauna data | None                                    |
-| `async_start_session()`              | Start sauna session         | None                                    |
-| `async_stop_session()`               | Stop sauna session          | None                                    |
-| `async_set_target_temperature(temp)` | Set target temperature      | `temp: int` (0, 40-100°C)               |
-| `async_set_sauna_duration(minutes)`  | Set session duration        | `minutes: int` (0, 60-1080)             |
-| `async_set_fan_speed(speed)`         | Set fan speed               | `speed: int` (0-3)                      |
-| `async_set_fan_duration(minutes)`    | Set fan duration            | `minutes: int` (0-20)                   |
-| `async_set_sauna_type(type)`         | Set sauna preset            | `type: int` (0 to device-dependent N-1) |
-| `async_set_light_control(enabled)`   | Control sauna light         | `enabled: bool`                         |
-| `async_restart_software()`           | Restart controller software | None                                    |
-| `async_close_cooldown()`             | Close active cooldown       | None                                    |
-| `async_dismiss_notifications()`      | Dismiss notifications       | None                                    |
+| Method                                         | Description                 | Parameters                                         |
+| ---------------------------------------------- | --------------------------- | -------------------------------------------------- |
+| `async_get_data()`                             | Read all current sauna data | None                                               |
+| `async_start_session()`                        | Start sauna session         | None                                               |
+| `async_stop_session()`                         | Stop sauna session          | None                                               |
+| `async_set_target_temperature(temp)`           | Set target temperature      | `temp: int` (0, 40-100°C)                          |
+| `async_set_sauna_duration(minutes)`            | Set session duration        | `minutes: int` (0, 60-1080)                        |
+| `async_set_fan_speed(speed)`                   | Set fan speed               | `speed: int` (0-3)                                 |
+| `async_set_fan_duration(minutes)`              | Set fan duration            | `minutes: int` (0-20)                              |
+| `async_set_sauna_type(type)`                   | Set sauna preset            | `type: int` (0 to device-dependent N-1)            |
+| `async_set_light_control(enabled)`             | Control sauna light         | `enabled: bool`                                    |
+| `async_restart_software()`                     | Restart controller software | None                                               |
+| `async_close_cooldown()`                       | Close active cooldown       | None                                               |
+| `async_dismiss_notifications()`                | Dismiss notifications       | None                                               |
+| `async_set_autoleil_mode(mode)`                | Set humidity/interval mode  | `mode: int` (0-1)                                  |
+| `async_set_autoleil_target_humidity(humidity)` | Set target humidity         | `humidity: int` (0 to 130-target temp)             |
+| `async_set_autoleil_interval(minutes)`         | Set water throw interval    | `minutes: int` (1-25)                              |
+| `async_set_autoleil_water_amount(amount)`      | Set valve-open duration     | `amount: int` (3-40, in 0.1 seconds)               |
+| `async_set_autoleil_duration(minutes)`         | Set AutoLeil duration       | `minutes: int` (60-1080, step 30)                  |
+| `async_set_autoleil_ready_mode(enabled)`       | Set ready mode              | `enabled: bool`                                    |
+| `async_set_autoleil_auto_ventilation(enabled)` | Set auto ventilation        | `enabled: bool`                                    |
+| `async_set_autoleil_button_use(enabled)`       | Enable physical button      | `enabled: bool`                                    |
+| `async_set_autoleil_button_timeout(seconds)`   | Set button timeout          | `seconds: int` (5, 15, 30, 60, 120, 180, 240, 300) |
 
 Before a session starts, fan speed `0` selects the sauna preset default and
 speeds `1-3` configure the next Modbus-started session. During an active session or cooldown, `0` turns the fan off and `1-3` changes its speed.
 
 The restart action is intended for remote recovery and temporarily interrupts the connection. Closing cooldown has no effect when cooldown is inactive. Dismissing notifications only closes dismissible on-screen messages; it does not clear active alarms or their causes.
+
+### AutoLeil Control
+
+AutoLeil controls require control panel firmware **1.2.5** or newer and AutoLeil firmware **1.8.2** or newer. Only use these methods when AutoLeil is connected.
+
+```python
+from pysaunum import AutoLeilMode
+
+await client.async_set_autoleil_mode(AutoLeilMode.HUMIDITY)
+await client.async_set_autoleil_target_humidity(40)
+await client.async_set_autoleil_interval(10)
+await client.async_set_autoleil_water_amount(10)  # 1.0 second
+await client.async_set_autoleil_duration(120)
+await client.async_set_autoleil_ready_mode(True)
+await client.async_set_autoleil_auto_ventilation(True)
+await client.async_set_autoleil_button_use(True)
+await client.async_set_autoleil_button_timeout(60)
+```
+
+Target humidity is validated against the current target temperature using `130 - target_temperature`. AutoLeil duration must use 30-minute steps and cannot exceed an explicitly configured session duration. If session duration is `0` (preset default), the controller enforces the preset-specific limit.
 
 ### Data Model (SaunumData)
 
@@ -313,6 +346,7 @@ This library is tested and compatible with:
 
 - Saunum sauna controllers with Modbus TCP interface
   - Tested with control panel v1.1.49 and power unit v1.1.49
+  - AutoLeil controls require control panel v1.2.5 and AutoLeil v1.8.2
 - Home Assistant integration
 - Python 3.12, 3.13+
 

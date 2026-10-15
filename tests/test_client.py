@@ -7,6 +7,7 @@ import pytest
 from pymodbus.exceptions import ModbusException
 
 from pysaunum import (
+    AutoLeilMode,
     SaunumClient,
     SaunumCommunicationError,
     SaunumConnectionError,
@@ -703,6 +704,299 @@ async def test_action_register(
     mock_modbus_client.write_register.assert_called_once_with(
         address=address, value=value, device_id=1
     )
+
+
+@pytest.mark.parametrize(
+    ("method_name", "argument", "address", "value"),
+    [
+        pytest.param(
+            "async_set_autoleil_mode",
+            AutoLeilMode.INTERVAL,
+            10,
+            1,
+            id="mode",
+        ),
+        pytest.param("async_set_autoleil_interval", 25, 12, 25, id="interval"),
+        pytest.param("async_set_autoleil_water_amount", 40, 13, 40, id="water"),
+        pytest.param("async_set_autoleil_ready_mode", True, 15, 1, id="ready-on"),
+        pytest.param("async_set_autoleil_ready_mode", False, 15, 0, id="ready-off"),
+        pytest.param(
+            "async_set_autoleil_auto_ventilation",
+            True,
+            16,
+            1,
+            id="ventilation-on",
+        ),
+        pytest.param(
+            "async_set_autoleil_auto_ventilation",
+            False,
+            16,
+            0,
+            id="ventilation-off",
+        ),
+        pytest.param("async_set_autoleil_button_use", True, 17, 1, id="button-use-on"),
+        pytest.param(
+            "async_set_autoleil_button_use", False, 17, 0, id="button-use-off"
+        ),
+        pytest.param(
+            "async_set_autoleil_button_timeout", 300, 18, 300, id="button-timeout"
+        ),
+    ],
+)
+async def test_set_autoleil_value(
+    mock_modbus_client: MagicMock,
+    method_name: str,
+    argument: int | bool,
+    address: int,
+    value: int,
+) -> None:
+    """Test setting fixed-range AutoLeil values."""
+    mock_modbus_client.connected = True
+
+    client = SaunumClient(host="192.168.1.100")
+    await getattr(client, method_name)(argument)
+
+    mock_modbus_client.write_register.assert_called_once_with(
+        address=address, value=value, device_id=1
+    )
+
+
+@pytest.mark.parametrize(
+    ("method_name", "argument", "message"),
+    [
+        pytest.param(
+            "async_set_autoleil_mode",
+            2,
+            "AutoLeil mode 2 out of range",
+            id="mode",
+        ),
+        pytest.param(
+            "async_set_autoleil_interval",
+            0,
+            "AutoLeil interval 0 minutes out of range",
+            id="interval-low",
+        ),
+        pytest.param(
+            "async_set_autoleil_interval",
+            26,
+            "AutoLeil interval 26 minutes out of range",
+            id="interval-high",
+        ),
+        pytest.param(
+            "async_set_autoleil_water_amount",
+            2,
+            "AutoLeil water amount 2 out of range",
+            id="water-low",
+        ),
+        pytest.param(
+            "async_set_autoleil_water_amount",
+            41,
+            "AutoLeil water amount 41 out of range",
+            id="water-high",
+        ),
+        pytest.param(
+            "async_set_autoleil_button_timeout",
+            10,
+            "AutoLeil button timeout 10 seconds invalid",
+            id="button-timeout",
+        ),
+    ],
+)
+async def test_set_autoleil_value_invalid(
+    mock_modbus_client: MagicMock,
+    method_name: str,
+    argument: int,
+    message: str,
+) -> None:
+    """Test rejecting invalid fixed-range AutoLeil values."""
+    mock_modbus_client.connected = True
+
+    client = SaunumClient(host="192.168.1.100")
+
+    with pytest.raises(ValueError, match=message):
+        await getattr(client, method_name)(argument)
+
+    mock_modbus_client.write_register.assert_not_called()
+
+
+async def test_set_autoleil_target_humidity(
+    mock_modbus_client: MagicMock,
+) -> None:
+    """Test setting humidity at the temperature-dependent maximum."""
+    mock_modbus_client.connected = True
+    response = MagicMock()
+    response.isError.return_value = False
+    response.registers = [80]
+    mock_modbus_client.read_holding_registers.return_value = response
+
+    client = SaunumClient(host="192.168.1.100")
+    await client.async_set_autoleil_target_humidity(50)
+
+    mock_modbus_client.read_holding_registers.assert_awaited_once_with(
+        address=4, count=1, device_id=1
+    )
+    mock_modbus_client.write_register.assert_awaited_once_with(
+        address=11, value=50, device_id=1
+    )
+
+
+async def test_set_autoleil_target_humidity_negative(
+    mock_modbus_client: MagicMock,
+) -> None:
+    """Test rejecting negative target humidity without reading the controller."""
+    mock_modbus_client.connected = True
+
+    client = SaunumClient(host="192.168.1.100")
+
+    with pytest.raises(ValueError, match="target humidity cannot be negative"):
+        await client.async_set_autoleil_target_humidity(-1)
+
+    mock_modbus_client.read_holding_registers.assert_not_called()
+
+
+async def test_set_autoleil_target_humidity_above_maximum(
+    mock_modbus_client: MagicMock,
+) -> None:
+    """Test rejecting humidity above the temperature-dependent maximum."""
+    mock_modbus_client.connected = True
+    response = MagicMock()
+    response.isError.return_value = False
+    response.registers = [80]
+    mock_modbus_client.read_holding_registers.return_value = response
+
+    client = SaunumClient(host="192.168.1.100")
+
+    with pytest.raises(ValueError, match="51% out of range"):
+        await client.async_set_autoleil_target_humidity(51)
+
+
+async def test_set_autoleil_target_humidity_invalid_temperature(
+    mock_modbus_client: MagicMock,
+) -> None:
+    """Test rejecting invalid controller temperature data."""
+    mock_modbus_client.connected = True
+    response = MagicMock()
+    response.isError.return_value = False
+    response.registers = [101]
+    mock_modbus_client.read_holding_registers.return_value = response
+
+    client = SaunumClient(host="192.168.1.100")
+
+    with pytest.raises(SaunumInvalidDataError, match="Invalid target temperature"):
+        await client.async_set_autoleil_target_humidity(20)
+
+
+@pytest.mark.parametrize(
+    ("session_duration", "autoleil_duration"),
+    [
+        pytest.param(120, 120, id="explicit-session-duration"),
+        pytest.param(0, 1080, id="preset-session-duration"),
+    ],
+)
+async def test_set_autoleil_duration(
+    mock_modbus_client: MagicMock,
+    session_duration: int,
+    autoleil_duration: int,
+) -> None:
+    """Test setting AutoLeil duration against the configured session duration."""
+    mock_modbus_client.connected = True
+    response = MagicMock()
+    response.isError.return_value = False
+    response.registers = [session_duration]
+    mock_modbus_client.read_holding_registers.return_value = response
+
+    client = SaunumClient(host="192.168.1.100")
+    await client.async_set_autoleil_duration(autoleil_duration)
+
+    mock_modbus_client.read_holding_registers.assert_awaited_once_with(
+        address=2, count=1, device_id=1
+    )
+    mock_modbus_client.write_register.assert_awaited_once_with(
+        address=14, value=autoleil_duration, device_id=1
+    )
+
+
+@pytest.mark.parametrize(
+    ("duration", "message"),
+    [
+        pytest.param(30, "30 minutes out of range", id="below-minimum"),
+        pytest.param(1110, "1110 minutes out of range", id="above-maximum"),
+        pytest.param(61, "must use 30-minute steps", id="invalid-step"),
+    ],
+)
+async def test_set_autoleil_duration_invalid(
+    mock_modbus_client: MagicMock,
+    duration: int,
+    message: str,
+) -> None:
+    """Test rejecting invalid AutoLeil duration ranges and steps."""
+    mock_modbus_client.connected = True
+
+    client = SaunumClient(host="192.168.1.100")
+
+    with pytest.raises(ValueError, match=message):
+        await client.async_set_autoleil_duration(duration)
+
+    mock_modbus_client.read_holding_registers.assert_not_called()
+
+
+async def test_set_autoleil_duration_exceeds_session(
+    mock_modbus_client: MagicMock,
+) -> None:
+    """Test rejecting AutoLeil duration above the explicit session duration."""
+    mock_modbus_client.connected = True
+    response = MagicMock()
+    response.isError.return_value = False
+    response.registers = [120]
+    mock_modbus_client.read_holding_registers.return_value = response
+
+    client = SaunumClient(host="192.168.1.100")
+
+    with pytest.raises(ValueError, match="150 minutes exceeds session duration 120"):
+        await client.async_set_autoleil_duration(150)
+
+
+async def test_autoleil_dependent_setting_not_connected(
+    mock_modbus_client: MagicMock,
+) -> None:
+    """Test reading dependent settings while disconnected."""
+    client = SaunumClient(host="192.168.1.100")
+
+    with pytest.raises(SaunumConnectionError, match="Not connected"):
+        await client.async_set_autoleil_target_humidity(20)
+
+
+@pytest.mark.parametrize(
+    ("error", "exception", "message"),
+    [
+        pytest.param(
+            TimeoutError("timeout"),
+            SaunumTimeoutError,
+            "Timeout reading register 4",
+            id="timeout",
+        ),
+        pytest.param(
+            ModbusException("failure"),
+            SaunumCommunicationError,
+            "Modbus error reading register 4",
+            id="modbus-error",
+        ),
+    ],
+)
+async def test_autoleil_dependent_setting_read_error(
+    mock_modbus_client: MagicMock,
+    error: Exception,
+    exception: type[Exception],
+    message: str,
+) -> None:
+    """Test errors while reading a dependent controller setting."""
+    mock_modbus_client.connected = True
+    mock_modbus_client.read_holding_registers.side_effect = error
+
+    client = SaunumClient(host="192.168.1.100")
+
+    with pytest.raises(exception, match=message):
+        await client.async_set_autoleil_target_humidity(20)
 
 
 async def test_set_fan_duration_valid(mock_modbus_client: MagicMock) -> None:
