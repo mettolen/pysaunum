@@ -106,6 +106,16 @@ async def main():
 asyncio.run(main())
 ```
 
+## Connection and Polling Guidance
+
+Saunum controllers use Modbus TCP port **502** by default. When scheduling reads and writes:
+
+- Allow at least **500 ms** between Modbus requests; **1000 ms** is recommended.
+- Low-traffic applications may poll every **2-5 seconds**.
+- Use a request timeout of at least **2 seconds**. The client default is 10 seconds.
+- Read at least once every **5-10 seconds** to keep the connection alive.
+- The control panel closes an idle connection after **20 seconds**.
+
 ## Context Manager Usage (Recommended)
 
 ```python

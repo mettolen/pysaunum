@@ -71,7 +71,12 @@ def _validate_registers(name: str, result: Any, expected_count: int) -> list[int
 
 
 class SaunumClient:
-    """Client for Saunum sauna controller."""
+    """Client for a Saunum sauna controller.
+
+    Allow at least 500 ms between Modbus requests (1000 ms recommended), use a
+    timeout of at least 2 seconds, and read every 5-10 seconds to keep the
+    connection alive. The controller closes idle connections after 20 seconds.
+    """
 
     def __init__(
         self,
@@ -86,7 +91,8 @@ class SaunumClient:
             host: IP address or hostname of the sauna controller
             port: Modbus TCP port (default: 502)
             device_id: Modbus device/unit ID (default: 1)
-            timeout: Connection timeout in seconds (default: 10)
+            timeout: Connection and request timeout in seconds (default: 10,
+                minimum recommended: 2)
 
         Note:
             For production use, prefer using the create() factory method
@@ -129,7 +135,8 @@ class SaunumClient:
             host: IP address or hostname of the sauna controller
             port: Modbus TCP port (default: 502)
             device_id: Modbus device/unit ID (default: 1)
-            timeout: Connection timeout in seconds (default: 10)
+            timeout: Connection and request timeout in seconds (default: 10,
+                minimum recommended: 2)
 
         Returns:
             Connected SaunumClient instance
