@@ -40,6 +40,7 @@ def _print_state(data: SaunumData) -> None:
     print(f"  Session active:      {data.session_active}")
     print(f"  Controller state:    {data.controller_state.name}")
     print(f"  Heater elements:     {data.heater_elements_active}")
+    print(f"  Humidity:            {data.humidity}%")
     print(f"  Fan speed:           {data.fan_speed} ({fan_name})")
     print(f"  Sauna type:          {data.sauna_type} ({sauna_type_name})")
     print(f"  Session duration:    {data.sauna_duration} minutes")
@@ -47,6 +48,20 @@ def _print_state(data: SaunumData) -> None:
     print(f"  Light on:            {data.light_on}")
     print(f"  Door open:           {data.door_open}")
     print(f"  On time:             {data.on_time} seconds")
+    print(f"  Active duration:     {data.active_session_duration} minutes")
+    print(f"  Session remaining:   {data.session_time_remaining} seconds")
+    print(f"  Fan remaining:       {data.fan_time_remaining} seconds")
+    print(f"  AutoLeil connected:  {data.autoleil_connected}")
+    print(f"  AutoLeil active:     {data.autoleil_active}")
+    print(f"  AutoLeil presses:    {data.autoleil_button_presses}")
+    print(
+        f"  AutoLeil throws:     {data.autoleil_manual_throws} manual, "
+        f"{data.autoleil_auto_throws} automatic"
+    )
+    print(f"  Notifications:       {data.active_notifications}")
+    print(f"  Start allowed:       {data.can_start_session}")
+    if not data.can_start_session:
+        print(f"  Start blocked by:    {data.start_block_reasons}")
 
     # Alarm summary
     alarms = [

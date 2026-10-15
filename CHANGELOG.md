@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added `ControllerState` and `SaunumData.controller_state` with the six operating states reported by controller register 109.
+- Added status fields for humidity, active session duration, remaining session/fan time, AutoLeil connection/activity/counters, active notifications, and session start-block reasons.
+- Added `Notification` and `StartBlockReason` flags plus `SaunumData.can_start_session`.
 - Added `async_restart_software()`, `async_close_cooldown()`, and `async_dismiss_notifications()` one-shot controller actions.
 - Added AutoLeil configuration methods for operating mode, target humidity, interval, water amount, duration, ready mode, automatic ventilation, physical button use, and button timeout.
 

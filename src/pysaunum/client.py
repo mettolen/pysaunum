@@ -39,7 +39,6 @@ from .const import (
     REG_AUTOLEIL_TARGET_HUMIDITY,
     REG_AUTOLEIL_WATER_AMOUNT,
     REG_CLOSE_COOLDOWN,
-    REG_CONTROLLER_STATE,
     REG_CURRENT_TEMP,
     REG_DISMISS_NOTIFICATIONS,
     REG_FAN_DURATION,
@@ -49,6 +48,7 @@ from .const import (
     REG_SAUNA_TYPE,
     REG_SESSION_ACTIVE,
     REG_SOFTWARE_RESTART,
+    REG_START_BLOCK_REASONS_LOW,
     REG_TARGET_TEMPERATURE,
     SOFTWARE_RESTART_MAGIC,
     STATUS_OFF,
@@ -56,7 +56,9 @@ from .const import (
     AutoLeilMode,
     ControllerState,
     FanSpeed,
+    Notification,
     SaunaType,
+    StartBlockReason,
 )
 from .exceptions import (
     SaunumCommunicationError,
@@ -259,14 +261,14 @@ class SaunumClient:
                     "control", control_result, expected_count=7
                 )
 
-                # Read status sensors through controller state (registers 100-109)
+                # Read status sensors (registers 100-118)
                 status_result = await self._client.read_holding_registers(
                     address=REG_CURRENT_TEMP,
-                    count=REG_CONTROLLER_STATE - REG_CURRENT_TEMP + 1,
+                    count=REG_START_BLOCK_REASONS_LOW - REG_CURRENT_TEMP + 1,
                     device_id=self._device_id,
                 )
                 status_regs = _validate_registers(
-                    "status", status_result, expected_count=10
+                    "status", status_result, expected_count=19
                 )
 
                 # Read alarm status (registers 200-205)
@@ -312,7 +314,22 @@ class SaunumClient:
 
             heater_elements_active = status_regs[3]
             door_open = bool(status_regs[4])
+            humidity = status_regs[5]
+            active_session_duration = status_regs[6]
+            session_time_remaining = status_regs[7]
+            fan_time_remaining = status_regs[8]
             controller_state = ControllerState(status_regs[9])
+            autoleil_connected = bool(status_regs[10])
+            autoleil_active = bool(status_regs[11])
+            autoleil_button_presses = status_regs[12]
+            autoleil_manual_throws = status_regs[13]
+            autoleil_auto_throws = status_regs[14]
+            active_notifications = Notification(
+                (status_regs[15] << 16) | status_regs[16]
+            )
+            start_block_reasons = StartBlockReason(
+                (status_regs[17] << 16) | status_regs[18]
+            )
 
             # Parse alarm status
             alarm_door_open = bool(alarm_regs[0])
@@ -334,7 +351,18 @@ class SaunumClient:
                 on_time=on_time,
                 heater_elements_active=heater_elements_active,
                 door_open=door_open,
+                humidity=humidity,
+                active_session_duration=active_session_duration,
+                session_time_remaining=session_time_remaining,
+                fan_time_remaining=fan_time_remaining,
                 controller_state=controller_state,
+                autoleil_connected=autoleil_connected,
+                autoleil_active=autoleil_active,
+                autoleil_button_presses=autoleil_button_presses,
+                autoleil_manual_throws=autoleil_manual_throws,
+                autoleil_auto_throws=autoleil_auto_throws,
+                active_notifications=active_notifications,
+                start_block_reasons=start_block_reasons,
                 alarm_door_open=alarm_door_open,
                 alarm_door_sensor=alarm_door_sensor,
                 alarm_thermal_cutoff=alarm_thermal_cutoff,

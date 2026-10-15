@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import IntEnum
+from enum import IntEnum, IntFlag
 from typing import Final
 
 __all__ = [
@@ -33,8 +33,10 @@ __all__ = [
     "AutoLeilMode",
     "ControllerState",
     "FanSpeed",
+    "Notification",
     "SaunaSessionState",
     "SaunaType",
+    "StartBlockReason",
 ]
 
 # Default connection settings
@@ -71,7 +73,20 @@ REG_ON_TIME_HIGH: Final = 101  # On time high 16-bits (seconds)
 REG_ON_TIME_LOW: Final = 102  # On time low 16-bits (seconds)
 REG_HEATER_STATUS: Final = 103  # Number of heater elements active
 REG_DOOR_STATUS: Final = 104  # Door status (open/closed)
+REG_HUMIDITY: Final = 105  # Relative humidity percentage
+REG_ACTIVE_SESSION_DURATION: Final = 106  # Active session duration in minutes
+REG_SESSION_TIME_REMAINING: Final = 107  # Session time remaining in seconds
+REG_FAN_TIME_REMAINING: Final = 108  # Fan runtime remaining in seconds
 REG_CONTROLLER_STATE: Final = 109  # Current controller operating state
+REG_AUTOLEIL_CONNECTED: Final = 110  # AutoLeil connection status
+REG_AUTOLEIL_ACTIVE: Final = 111  # AutoLeil activity status
+REG_AUTOLEIL_BUTTON_PRESSES: Final = 112  # Physical button press count
+REG_AUTOLEIL_MANUAL_THROWS: Final = 113  # Manual water throw count
+REG_AUTOLEIL_AUTO_THROWS: Final = 114  # Automatic water throw count
+REG_ACTIVE_NOTIFICATIONS_HIGH: Final = 115  # Active notifications high word
+REG_ACTIVE_NOTIFICATIONS_LOW: Final = 116  # Active notifications low word
+REG_START_BLOCK_REASONS_HIGH: Final = 117  # Start-block reasons high word
+REG_START_BLOCK_REASONS_LOW: Final = 118  # Start-block reasons low word
 
 # Modbus register addresses - Alarm Status (Read-Only)
 REG_ALARM_DOOR_OPEN: Final = 200  # Door open during heating alarm
@@ -153,6 +168,44 @@ class ControllerState(IntEnum):
     READY = 4
     COOLDOWN = 5
     WAITING_FOR_DOOR = 6
+
+
+class Notification(IntFlag):
+    """Active controller notification flags."""
+
+    DOOR_OPEN = 1 << 0
+    DOOR_SENSOR_ALARM = 1 << 1
+    THERMAL_CUTOFF = 1 << 2
+    INTERNAL_OVERHEATING = 1 << 3
+    TEMP_SENSOR_SHORT = 1 << 4
+    TEMP_SENSOR_OPEN = 1 << 5
+    POWER_UNIT_FIRMWARE_NEEDS_UPDATE = 1 << 6
+    POWER_UNIT_COMMUNICATION_ERROR = 1 << 7
+    POWER_UNIT_FIRMWARE_OUTDATED = 1 << 8
+    CONTROL_PANEL_UPDATE_AVAILABLE = 1 << 9
+    POWER_UNIT_UPDATE_AVAILABLE = 1 << 10
+    AUTOLEIL_UPDATE_AVAILABLE = 1 << 11
+    LIGHTING_MODULE_UPDATE_AVAILABLE = 1 << 12
+    UPDATE_FAILED = 1 << 13
+    FIRMWARE_UPDATE_IN_PROGRESS = 1 << 14
+
+
+class StartBlockReason(IntFlag):
+    """Reasons the controller will not start a session."""
+
+    SESSION_ALREADY_ACTIVE = 1 << 0
+    DOOR_OPEN_ALARM = 1 << 1
+    DOOR_SENSOR_ALARM = 1 << 2
+    THERMAL_CUTOFF = 1 << 3
+    INTERNAL_OVERHEATING = 1 << 4
+    TEMP_SENSOR_SHORT = 1 << 5
+    TEMP_SENSOR_OPEN = 1 << 6
+    POWER_UNIT_FIRMWARE_NEEDS_UPDATE = 1 << 7
+    POWER_UNIT_COMMUNICATION_ERROR = 1 << 8
+    POWER_UNIT_FIRMWARE_OUTDATED = 1 << 9
+    FIRMWARE_UPDATE_IN_PROGRESS = 1 << 10
+    INVALID_SAUNA_TYPE = 1 << 11
+    OTHER_CONTROLLER_ERROR = 1 << 31
 
 
 SaunaSessionState = ControllerState

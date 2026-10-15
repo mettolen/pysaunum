@@ -9,12 +9,14 @@ from pymodbus.exceptions import ModbusException
 from pysaunum import (
     AutoLeilMode,
     ControllerState,
+    Notification,
     SaunumClient,
     SaunumCommunicationError,
     SaunumConnectionError,
     SaunumData,
     SaunumInvalidDataError,
     SaunumTimeoutError,
+    StartBlockReason,
 )
 from pysaunum.const import (
     DEFAULT_DEVICE_ID,
@@ -94,10 +96,30 @@ async def test_get_data_success(mock_modbus_client: MagicMock) -> None:
     # session=1, type=0, duration=60, fan_dur=10, temp=80, fan_speed=2, light=1
     control_response.registers = [1, 0, 60, 10, 80, 2, 1]
 
-    # Mock status registers response (100-109)
+    # Mock status registers response (100-118)
     status_response = MagicMock()
     status_response.isError.return_value = False
-    status_response.registers = [75, 1800, 900, 1, 0, 0, 0, 0, 0, 3]
+    status_response.registers = [
+        75,
+        1800,
+        900,
+        1,
+        0,
+        45,
+        60,
+        1800,
+        300,
+        3,
+        1,
+        1,
+        12,
+        8,
+        4,
+        0,
+        (1 << 14) | (1 << 0),
+        0x8000,
+        1,
+    ]
 
     # Mock alarm registers response (200-205: all alarm states)
     alarm_response = MagicMock()
@@ -125,8 +147,25 @@ async def test_get_data_success(mock_modbus_client: MagicMock) -> None:
     assert data.on_time == (1800 << 16) + 900  # Combined 32-bit value
     assert data.heater_elements_active == 1  # 1 heater element active
     assert data.door_open is False
+    assert data.humidity == 45
+    assert data.active_session_duration == 60
+    assert data.session_time_remaining == 1800
+    assert data.fan_time_remaining == 300
     assert data.controller_state is ControllerState.HEATING
     assert data.session_state is ControllerState.HEATING
+    assert data.autoleil_connected is True
+    assert data.autoleil_active is True
+    assert data.autoleil_button_presses == 12
+    assert data.autoleil_manual_throws == 8
+    assert data.autoleil_auto_throws == 4
+    assert data.active_notifications == (
+        Notification.DOOR_OPEN | Notification.FIRMWARE_UPDATE_IN_PROGRESS
+    )
+    assert data.start_block_reasons == (
+        StartBlockReason.SESSION_ALREADY_ACTIVE
+        | StartBlockReason.OTHER_CONTROLLER_ERROR
+    )
+    assert data.can_start_session is False
     assert data.alarm_door_open is False
     assert data.alarm_door_sensor is False
     assert data.alarm_thermal_cutoff is False
@@ -151,7 +190,27 @@ async def test_get_data_negative_current_temperature(
 
     status_response = MagicMock()
     status_response.isError.return_value = False
-    status_response.registers = [65535, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    status_response.registers = [
+        65535,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    ]
 
     alarm_response = MagicMock()
     alarm_response.isError.return_value = False
@@ -181,7 +240,27 @@ async def test_get_data_invalid_controller_state(
 
     status_response = MagicMock()
     status_response.isError.return_value = False
-    status_response.registers = [20, 0, 0, 0, 0, 0, 0, 0, 0, 7]
+    status_response.registers = [
+        20,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        7,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    ]
 
     alarm_response = MagicMock()
     alarm_response.isError.return_value = False
@@ -372,7 +451,27 @@ async def test_get_data_alarm_registers_error(mock_modbus_client: MagicMock) -> 
     # Mock successful status registers response
     status_response = MagicMock()
     status_response.isError.return_value = False
-    status_response.registers = [75, 1800, 900, 1, 0, 0, 0, 0, 0, 3]
+    status_response.registers = [
+        75,
+        1800,
+        900,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    ]
 
     # Mock alarm registers response with error
     alarm_response = MagicMock()
@@ -450,7 +549,27 @@ async def test_get_data_high_target_temperature(
     # Mock status registers response
     status_response = MagicMock()
     status_response.isError.return_value = False
-    status_response.registers = [75, 1800, 900, 1, 0, 0, 0, 0, 0, 3]
+    status_response.registers = [
+        75,
+        1800,
+        900,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    ]
 
     # Mock alarm registers response
     alarm_response = MagicMock()
@@ -483,7 +602,27 @@ async def test_get_data_low_target_temperature(mock_modbus_client: MagicMock) ->
     # Mock status registers response
     status_response = MagicMock()
     status_response.isError.return_value = False
-    status_response.registers = [75, 1800, 900, 1, 0, 0, 0, 0, 0, 3]
+    status_response.registers = [
+        75,
+        1800,
+        900,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    ]
 
     # Mock alarm registers response
     alarm_response = MagicMock()
@@ -1152,7 +1291,27 @@ async def test_get_data_heater_elements_count(mock_modbus_client: MagicMock) -> 
         status_response = MagicMock()
         status_response.isError.return_value = False
         # temp=70, on_time_high=0, on_time_low=0, heater_elements=count, door=0
-        status_response.registers = [70, 0, 0, count, 0, 0, 0, 0, 0, 3]
+        status_response.registers = [
+            70,
+            0,
+            0,
+            count,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ]
 
         mock_modbus_client.read_holding_registers.side_effect = [
             control_response,
@@ -1166,7 +1325,27 @@ async def test_get_data_heater_elements_count(mock_modbus_client: MagicMock) -> 
     # Test heater element count outside typical range - raw value passed through
     status_response_other = MagicMock()
     status_response_other.isError.return_value = False
-    status_response_other.registers = [70, 0, 0, 5, 0, 0, 0, 0, 0, 3]
+    status_response_other.registers = [
+        70,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    ]
 
     mock_modbus_client.read_holding_registers.side_effect = [
         control_response,
@@ -1195,7 +1374,27 @@ async def test_get_data_fan_speed_validation(mock_modbus_client: MagicMock) -> N
     # Mock status and alarm registers response
     status_response = MagicMock()
     status_response.isError.return_value = False
-    status_response.registers = [70, 0, 0, 1, 0, 0, 0, 0, 0, 3]
+    status_response.registers = [
+        70,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    ]
 
     alarm_response = MagicMock()
     alarm_response.isError.return_value = False
@@ -1259,7 +1458,27 @@ async def test_get_data_invalid_data_error(mock_modbus_client: MagicMock) -> Non
 
     status_response = MagicMock()
     status_response.isError.return_value = False
-    status_response.registers = [75, 0, 100, 3, 0, 0, 0, 0, 0, 3]
+    status_response.registers = [
+        75,
+        0,
+        100,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    ]
 
     alarm_response = MagicMock()
     alarm_response.isError.return_value = False

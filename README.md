@@ -164,6 +164,10 @@ from pysaunum.const import (
     # Device-reported controller state (IntEnum)
     ControllerState,    # STANDBY through WAITING_FOR_DOOR
 
+    # Status bit masks (IntFlag)
+    Notification,
+    StartBlockReason,
+
     # Limits
     MIN_TEMPERATURE,    # 40°C
     MAX_TEMPERATURE,    # 100°C
@@ -257,7 +261,19 @@ class SaunumData:
     on_time: int                           # Device uptime in seconds
     heater_elements_active: int            # Active heater elements
     door_open: bool                        # Door status
+    humidity: int                          # Relative humidity percentage
+    active_session_duration: int           # Active duration in minutes
+    session_time_remaining: int            # Session time remaining in seconds
+    fan_time_remaining: int                # Fan time remaining in seconds
     controller_state: ControllerState      # Device-reported operating state
+    autoleil_connected: bool               # AutoLeil connection status
+    autoleil_active: bool                  # AutoLeil activity status
+    autoleil_button_presses: int           # Physical button press count
+    autoleil_manual_throws: int             # Manual water throw count
+    autoleil_auto_throws: int               # Automatic water throw count
+    active_notifications: Notification     # Active notification bit mask
+    start_block_reasons: StartBlockReason  # Session start-block bit mask
+    can_start_session: bool                # No start-block reasons (property)
 
     # Alarm status
     alarm_door_open: bool                  # Door alarm during heating
@@ -367,6 +383,31 @@ if data.controller_state is ControllerState.COOLDOWN:
 The state comes directly from controller register 109 and distinguishes standby,
 scheduled, heating, ready, cooldown, and waiting for the door to close.
 `session_state` remains as a compatibility alias for `controller_state`.
+
+### Monitoring Status and Start Conditions
+
+```python
+from pysaunum import Notification, StartBlockReason
+
+data = await client.async_get_data()
+
+print(f"Humidity: {data.humidity}%")
+print(f"Session remaining: {data.session_time_remaining} seconds")
+print(f"Fan remaining: {data.fan_time_remaining} seconds")
+print(f"AutoLeil connected: {data.autoleil_connected}")
+
+if Notification.DOOR_OPEN in data.active_notifications:
+    print("Door-open notification is active")
+
+if not data.can_start_session:
+    print(f"Cannot start: {data.start_block_reasons}")
+
+if StartBlockReason.OTHER_CONTROLLER_ERROR in data.start_block_reasons:
+    print("The controller reports another blocking error")
+```
+
+Notification and start-block values are 32-bit `IntFlag` masks, so multiple
+conditions can be active simultaneously.
 
 ### Monitoring Heater Elements
 

@@ -2,7 +2,13 @@
 
 import pytest
 
-from pysaunum import ControllerState, FanSpeed, SaunumData
+from pysaunum import (
+    ControllerState,
+    FanSpeed,
+    Notification,
+    SaunumData,
+    StartBlockReason,
+)
 
 
 def _create_sauna_data() -> SaunumData:
@@ -19,7 +25,18 @@ def _create_sauna_data() -> SaunumData:
         on_time=3600,
         heater_elements_active=0,
         door_open=False,
+        humidity=45,
+        active_session_duration=0,
+        session_time_remaining=0,
+        fan_time_remaining=0,
         controller_state=ControllerState.STANDBY,
+        autoleil_connected=True,
+        autoleil_active=False,
+        autoleil_button_presses=5,
+        autoleil_manual_throws=3,
+        autoleil_auto_throws=7,
+        active_notifications=Notification(0),
+        start_block_reasons=StartBlockReason(0),
         alarm_door_open=False,
         alarm_door_sensor=False,
         alarm_thermal_cutoff=False,
@@ -34,6 +51,7 @@ def test_session_state() -> None:
     data = _create_sauna_data()
 
     assert data.session_state is ControllerState.STANDBY
+    assert data.can_start_session is True
 
 
 @pytest.mark.parametrize(

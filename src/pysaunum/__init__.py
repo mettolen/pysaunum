@@ -33,8 +33,10 @@ from .const import (
     AutoLeilMode,
     ControllerState,
     FanSpeed,
+    Notification,
     SaunaSessionState,
     SaunaType,
+    StartBlockReason,
 )
 from .exceptions import (
     SaunumCommunicationError,
@@ -83,6 +85,8 @@ __all__ = [
     "AutoLeilMode",
     "ControllerState",
     "FanSpeed",
+    "Notification",
     "SaunaSessionState",
     "SaunaType",
+    "StartBlockReason",
 ]

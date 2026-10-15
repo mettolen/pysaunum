@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .const import ControllerState, FanSpeed, SaunaType
+from .const import (
+    ControllerState,
+    FanSpeed,
+    Notification,
+    SaunaType,
+    StartBlockReason,
+)
 
 __all__ = ["SaunumData"]
 
@@ -52,8 +58,41 @@ class SaunumData:
     door_open: bool
     """Whether the door is open."""
 
+    humidity: int
+    """Relative humidity percentage."""
+
+    active_session_duration: int
+    """Active session duration in minutes, or 0 when inactive."""
+
+    session_time_remaining: int
+    """Time remaining in the active session in seconds."""
+
+    fan_time_remaining: int
+    """Fan runtime remaining in seconds."""
+
     controller_state: ControllerState
     """Operating state reported by the controller."""
+
+    autoleil_connected: bool
+    """Whether AutoLeil is connected."""
+
+    autoleil_active: bool
+    """Whether AutoLeil is active."""
+
+    autoleil_button_presses: int
+    """Physical AutoLeil button press count."""
+
+    autoleil_manual_throws: int
+    """Manual AutoLeil water throw count."""
+
+    autoleil_auto_throws: int
+    """Automatic AutoLeil water throw count."""
+
+    active_notifications: Notification
+    """Active controller notifications."""
+
+    start_block_reasons: StartBlockReason
+    """Conditions preventing a session from starting."""
 
     # Alarm status
     alarm_door_open: bool
@@ -78,3 +117,8 @@ class SaunumData:
     def session_state(self) -> ControllerState:
         """Return the device-reported state for compatibility."""
         return self.controller_state
+
+    @property
+    def can_start_session(self) -> bool:
+        """Return whether no controller condition blocks session start."""
+        return not self.start_block_reasons
