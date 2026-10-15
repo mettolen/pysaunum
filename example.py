@@ -38,6 +38,7 @@ def _print_state(data: SaunumData) -> None:
     print(f"  Current temperature: {data.current_temperature}°C")
     print(f"  Target temperature:  {data.target_temperature}°C")
     print(f"  Session active:      {data.session_active}")
+    print(f"  Controller state:    {data.controller_state.name}")
     print(f"  Heater elements:     {data.heater_elements_active}")
     print(f"  Fan speed:           {data.fan_speed} ({fan_name})")
     print(f"  Sauna type:          {data.sauna_type} ({sauna_type_name})")

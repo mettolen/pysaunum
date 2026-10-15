@@ -39,6 +39,7 @@ from .const import (
     REG_AUTOLEIL_TARGET_HUMIDITY,
     REG_AUTOLEIL_WATER_AMOUNT,
     REG_CLOSE_COOLDOWN,
+    REG_CONTROLLER_STATE,
     REG_CURRENT_TEMP,
     REG_DISMISS_NOTIFICATIONS,
     REG_FAN_DURATION,
@@ -53,6 +54,7 @@ from .const import (
     STATUS_OFF,
     STATUS_ON,
     AutoLeilMode,
+    ControllerState,
     FanSpeed,
     SaunaType,
 )
@@ -257,14 +259,14 @@ class SaunumClient:
                     "control", control_result, expected_count=7
                 )
 
-                # Read status sensors (registers 100-104)
+                # Read status sensors through controller state (registers 100-109)
                 status_result = await self._client.read_holding_registers(
                     address=REG_CURRENT_TEMP,
-                    count=5,
+                    count=REG_CONTROLLER_STATE - REG_CURRENT_TEMP + 1,
                     device_id=self._device_id,
                 )
                 status_regs = _validate_registers(
-                    "status", status_result, expected_count=5
+                    "status", status_result, expected_count=10
                 )
 
                 # Read alarm status (registers 200-205)
@@ -310,6 +312,7 @@ class SaunumClient:
 
             heater_elements_active = status_regs[3]
             door_open = bool(status_regs[4])
+            controller_state = ControllerState(status_regs[9])
 
             # Parse alarm status
             alarm_door_open = bool(alarm_regs[0])
@@ -331,6 +334,7 @@ class SaunumClient:
                 on_time=on_time,
                 heater_elements_active=heater_elements_active,
                 door_open=door_open,
+                controller_state=controller_state,
                 alarm_door_open=alarm_door_open,
                 alarm_door_sensor=alarm_door_sensor,
                 alarm_thermal_cutoff=alarm_thermal_cutoff,

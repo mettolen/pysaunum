@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import IntEnum, StrEnum
+from enum import IntEnum
 from typing import Final
 
 __all__ = [
@@ -31,6 +31,7 @@ __all__ = [
     "AUTOLEIL_DURATION_STEP",
     "AUTOLEIL_BUTTON_TIMEOUTS",
     "AutoLeilMode",
+    "ControllerState",
     "FanSpeed",
     "SaunaSessionState",
     "SaunaType",
@@ -70,6 +71,7 @@ REG_ON_TIME_HIGH: Final = 101  # On time high 16-bits (seconds)
 REG_ON_TIME_LOW: Final = 102  # On time low 16-bits (seconds)
 REG_HEATER_STATUS: Final = 103  # Number of heater elements active
 REG_DOOR_STATUS: Final = 104  # Door status (open/closed)
+REG_CONTROLLER_STATE: Final = 109  # Current controller operating state
 
 # Modbus register addresses - Alarm Status (Read-Only)
 REG_ALARM_DOOR_OPEN: Final = 200  # Door open during heating alarm
@@ -142,12 +144,18 @@ class SaunaType(IntEnum):
     TYPE_3 = 2
 
 
-class SaunaSessionState(StrEnum):
-    """Sauna session operating states."""
+class ControllerState(IntEnum):
+    """Controller operating states reported by register 109."""
 
-    INACTIVE = "inactive"
-    HEATING = "heating"
-    COOLDOWN = "cooldown"
+    STANDBY = 1
+    SCHEDULED = 2
+    HEATING = 3
+    READY = 4
+    COOLDOWN = 5
+    WAITING_FOR_DOOR = 6
+
+
+SaunaSessionState = ControllerState
 
 
 # Status values

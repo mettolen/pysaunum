@@ -161,8 +161,8 @@ from pysaunum.const import (
     # Convenience labels for the first three preset indices
     SaunaType,          # SaunaType.TYPE_1=0, TYPE_2=1, TYPE_3=2
 
-    # Normalized session state (StrEnum)
-    SaunaSessionState,  # INACTIVE, HEATING, or COOLDOWN
+    # Device-reported controller state (IntEnum)
+    ControllerState,    # STANDBY through WAITING_FOR_DOOR
 
     # Limits
     MIN_TEMPERATURE,    # 40°C
@@ -244,7 +244,7 @@ Target humidity is validated against the current target temperature using `130 -
 class SaunumData:
     # Session control
     session_active: bool                   # Raw controller session status
-    session_state: SaunaSessionState       # Normalized operating state (property)
+    session_state: ControllerState         # Compatibility property
     sauna_type: SaunaType | int            # Device-dependent preset index
     sauna_duration: int                    # 0 or 60-1080 minutes
     fan_duration: int                      # 0-20 minutes
@@ -253,10 +253,11 @@ class SaunumData:
     light_on: bool                         # Light status
 
     # Status sensors
-    current_temperature: float             # Current temp in °C
+    current_temperature: int               # Current temp in °C
     on_time: int                           # Device uptime in seconds
     heater_elements_active: int            # Active heater elements
     door_open: bool                        # Door status
+    controller_state: ControllerState      # Device-reported operating state
 
     # Alarm status
     alarm_door_open: bool                  # Door alarm during heating
@@ -355,17 +356,17 @@ This library is tested and compatible with:
 ### Monitoring Session State
 
 ```python
-from pysaunum import SaunaSessionState
+from pysaunum import ControllerState
 
 data = await client.async_get_data()
 
-if data.session_state is SaunaSessionState.COOLDOWN:
+if data.controller_state is ControllerState.COOLDOWN:
     print("The heaters are off and the cooldown fan is active")
 ```
 
-The controller reports cooldown as an active session with a target temperature
-of 0°C. `session_state` normalizes these raw register values while
-`session_active` and `target_temperature` remain available unchanged.
+The state comes directly from controller register 109 and distinguishes standby,
+scheduled, heating, ready, cooldown, and waiting for the door to close.
+`session_state` remains as a compatibility alias for `controller_state`.
 
 ### Monitoring Heater Elements
 

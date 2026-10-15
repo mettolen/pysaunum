@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .const import FanSpeed, SaunaSessionState, SaunaType
+from .const import ControllerState, FanSpeed, SaunaType
 
 __all__ = ["SaunumData"]
 
@@ -52,6 +52,9 @@ class SaunumData:
     door_open: bool
     """Whether the door is open."""
 
+    controller_state: ControllerState
+    """Operating state reported by the controller."""
+
     # Alarm status
     alarm_door_open: bool
     """Alarm: door open during heating."""
@@ -72,10 +75,6 @@ class SaunumData:
     """Alarm: temperature sensor not connected."""
 
     @property
-    def session_state(self) -> SaunaSessionState:
-        """Return the normalized session operating state."""
-        if not self.session_active:
-            return SaunaSessionState.INACTIVE
-        if self.target_temperature == 0:
-            return SaunaSessionState.COOLDOWN
-        return SaunaSessionState.HEATING
+    def session_state(self) -> ControllerState:
+        """Return the device-reported state for compatibility."""
+        return self.controller_state

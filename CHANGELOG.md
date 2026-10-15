@@ -9,12 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added `SaunaSessionState` and `SaunumData.session_state` to distinguish inactive, heating, and cooldown states. The controller reports cooldown as an active session with a target temperature of 0°C.
+- Added `ControllerState` and `SaunumData.controller_state` with the six operating states reported by controller register 109.
 - Added `async_restart_software()`, `async_close_cooldown()`, and `async_dismiss_notifications()` one-shot controller actions.
 - Added AutoLeil configuration methods for operating mode, target humidity, interval, water amount, duration, ready mode, automatic ventilation, physical button use, and button timeout.
 
 ### Changed
 
+- `SaunumData.session_state` now returns the device-reported `ControllerState` instead of inferring a limited state from session and target-temperature registers. `SaunaSessionState` remains an alias for compatibility.
 - Sauna types are now treated as device-dependent, zero-based preset indices; `SaunaType` remains available as convenience labels for the first three indices.
 - Session duration validation now accepts `0` for the preset default or `60-1080` minutes, including the extended range for public saunas.
 - Fan operating time now supports `0-20` minutes.

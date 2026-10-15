@@ -1,10 +1,8 @@
 """Tests for pysaunum data models."""
 
-from dataclasses import replace
-
 import pytest
 
-from pysaunum import FanSpeed, SaunaSessionState, SaunumData
+from pysaunum import ControllerState, FanSpeed, SaunumData
 
 
 def _create_sauna_data() -> SaunumData:
@@ -21,6 +19,7 @@ def _create_sauna_data() -> SaunumData:
         on_time=3600,
         heater_elements_active=0,
         door_open=False,
+        controller_state=ControllerState.STANDBY,
         alarm_door_open=False,
         alarm_door_sensor=False,
         alarm_thermal_cutoff=False,
@@ -30,25 +29,24 @@ def _create_sauna_data() -> SaunumData:
     )
 
 
+def test_session_state() -> None:
+    """Test the compatibility alias for the device-reported controller state."""
+    data = _create_sauna_data()
+
+    assert data.session_state is ControllerState.STANDBY
+
+
 @pytest.mark.parametrize(
-    ("session_active", "target_temperature", "expected_state"),
+    ("value", "expected"),
     [
-        (False, 0, SaunaSessionState.INACTIVE),
-        (False, 80, SaunaSessionState.INACTIVE),
-        (True, 0, SaunaSessionState.COOLDOWN),
-        (True, 80, SaunaSessionState.HEATING),
+        (1, ControllerState.STANDBY),
+        (2, ControllerState.SCHEDULED),
+        (3, ControllerState.HEATING),
+        (4, ControllerState.READY),
+        (5, ControllerState.COOLDOWN),
+        (6, ControllerState.WAITING_FOR_DOOR),
     ],
 )
-def test_session_state(
-    session_active: bool,
-    target_temperature: int,
-    expected_state: SaunaSessionState,
-) -> None:
-    """Test normalization of raw session and target-temperature registers."""
-    data = replace(
-        _create_sauna_data(),
-        session_active=session_active,
-        target_temperature=target_temperature,
-    )
-
-    assert data.session_state is expected_state
+def test_controller_state(value: int, expected: ControllerState) -> None:
+    """Test controller state register mappings."""
+    assert ControllerState(value) is expected
