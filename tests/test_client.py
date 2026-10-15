@@ -680,6 +680,31 @@ async def test_set_light_control(mock_modbus_client: MagicMock) -> None:
     )
 
 
+@pytest.mark.parametrize(
+    ("method_name", "address", "value"),
+    [
+        pytest.param("async_restart_software", 7, 0xA55A, id="software-restart"),
+        pytest.param("async_close_cooldown", 8, 1, id="close-cooldown"),
+        pytest.param("async_dismiss_notifications", 9, 1, id="dismiss-notifications"),
+    ],
+)
+async def test_action_register(
+    mock_modbus_client: MagicMock,
+    method_name: str,
+    address: int,
+    value: int,
+) -> None:
+    """Test sending a one-shot action command."""
+    mock_modbus_client.connected = True
+
+    client = SaunumClient(host="192.168.1.100")
+    await getattr(client, method_name)()
+
+    mock_modbus_client.write_register.assert_called_once_with(
+        address=address, value=value, device_id=1
+    )
+
+
 async def test_set_fan_duration_valid(mock_modbus_client: MagicMock) -> None:
     """Test setting valid fan duration."""
     mock_modbus_client.connected = True

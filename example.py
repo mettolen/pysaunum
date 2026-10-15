@@ -79,7 +79,7 @@ async def main() -> None:
         # # Example: Configure sauna settings
         # print("\nConfiguring sauna settings...")
 
-        # # Set sauna type (0=Type 1, 1=Type 2, 2=Type 3)
+        # # Set a device-dependent, zero-based sauna preset
         # print(f"Setting sauna type to Type 2 (value {SaunaType.TYPE_2})...")
         # await client.async_set_sauna_type(SaunaType.TYPE_2)
 
@@ -87,15 +87,15 @@ async def main() -> None:
         # print("Setting target temperature to 85°C...")
         # await client.async_set_target_temperature(85)
 
-        # # Set session duration (0-720 minutes, 0 for type default)
+        # # Set session duration (0 for type default, or 60-1080 minutes)
         # print(f"Setting session duration to {DEFAULT_DURATION} minutes...")
         # await client.async_set_sauna_duration(DEFAULT_DURATION)
 
-        # # Set fan speed (0=Off, 1=Low, 2=Medium, 3=High)
+        # # Before start, 0=type default; while active, 0=Off; 1-3 set speed
         # print(f"Setting fan speed to Medium ({FanSpeed.MEDIUM})...")
         # await client.async_set_fan_speed(FanSpeed.MEDIUM)
 
-        # # Set fan duration (0-15 minutes, 0 for type default)
+        # # Set fan duration (0-20 minutes, 0 for type default)
         # print("Setting fan duration to 15 minutes...")
         # await client.async_set_fan_duration(15)
 
@@ -130,6 +130,16 @@ async def main() -> None:
         # await asyncio.sleep(2)
         # await client.async_set_light_control(False)
         # print("Light turned off")
+
+        # # Close an active cooldown or post-session ventilation view
+        # await client.async_close_cooldown()
+
+        # # Dismiss on-screen notifications (active alarms remain active)
+        # await client.async_dismiss_notifications()
+
+        # # Restart controller software for remote recovery. This interrupts
+        # # the connection, so reconnect before issuing further commands.
+        # await client.async_restart_software()
 
     except SaunumConnectionError as err:
         print(f"Connection error: {err}")
@@ -216,7 +226,7 @@ if __name__ == "__main__":
     print("=" * 50)
 
     # Show available constants
-    asyncio.run(demonstrate_constants())
+    # asyncio.run(demonstrate_constants())
 
     # Run the full example
     print("\nFULL FEATURE DEMONSTRATION")

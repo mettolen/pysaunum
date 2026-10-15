@@ -20,14 +20,18 @@ from .const import (
     MIN_FAN_DURATION,
     MIN_TEMPERATURE,
     REG_ALARM_DOOR_OPEN,
+    REG_CLOSE_COOLDOWN,
     REG_CURRENT_TEMP,
+    REG_DISMISS_NOTIFICATIONS,
     REG_FAN_DURATION,
     REG_FAN_SPEED,
     REG_LIGHT_CONTROL,
     REG_SAUNA_DURATION,
     REG_SAUNA_TYPE,
     REG_SESSION_ACTIVE,
+    REG_SOFTWARE_RESTART,
     REG_TARGET_TEMPERATURE,
+    SOFTWARE_RESTART_MAGIC,
     STATUS_OFF,
     STATUS_ON,
     FanSpeed,
@@ -515,6 +519,43 @@ class SaunumClient:
         _LOGGER.debug("Setting light to %s", "on" if enabled else "off")
         await self._async_write_register(REG_LIGHT_CONTROL, value)
         _LOGGER.debug("Light turned %s", "on" if enabled else "off")
+
+    async def async_restart_software(self) -> None:
+        """Restart the controller software for remote recovery.
+
+        Raises:
+            SaunumConnectionError: If not connected
+            SaunumCommunicationError: If write operation fails
+        """
+        _LOGGER.debug("Restarting controller software")
+        await self._async_write_register(REG_SOFTWARE_RESTART, SOFTWARE_RESTART_MAGIC)
+        _LOGGER.debug("Controller software restart requested")
+
+    async def async_close_cooldown(self) -> None:
+        """Close the active cooldown or post-session ventilation view.
+
+        The command has no effect when cooldown mode is not active.
+
+        Raises:
+            SaunumConnectionError: If not connected
+            SaunumCommunicationError: If write operation fails
+        """
+        _LOGGER.debug("Closing cooldown mode")
+        await self._async_write_register(REG_CLOSE_COOLDOWN, STATUS_ON)
+        _LOGGER.debug("Cooldown close requested")
+
+    async def async_dismiss_notifications(self) -> None:
+        """Dismiss on-screen notifications.
+
+        This does not clear active alarms or resolve their causes.
+
+        Raises:
+            SaunumConnectionError: If not connected
+            SaunumCommunicationError: If write operation fails
+        """
+        _LOGGER.debug("Dismissing notifications")
+        await self._async_write_register(REG_DISMISS_NOTIFICATIONS, STATUS_ON)
+        _LOGGER.debug("Notification dismissal requested")
 
     async def _async_write_register(self, address: int, value: int) -> None:
         """Write a single holding register.

@@ -39,6 +39,11 @@ REG_FAN_DURATION: Final = 3  # Fan duration in minutes (0-20), 0=type default
 REG_TARGET_TEMPERATURE: Final = 4  # Temperature setpoint in °C (40-100), 0=type defined
 REG_FAN_SPEED: Final = 5  # Fan speed setting (0-3), 0=Off, 1=Low, 2=Medium, 3=High
 REG_LIGHT_CONTROL: Final = 6  # Light on/off control (0=Off, 1=On)
+REG_SOFTWARE_RESTART: Final = 7  # Software restart command
+REG_CLOSE_COOLDOWN: Final = 8  # Close active cooldown mode
+REG_DISMISS_NOTIFICATIONS: Final = 9  # Dismiss on-screen notifications
+
+SOFTWARE_RESTART_MAGIC: Final = 0xA55A
 
 # Modbus register addresses - Status Sensors (Read-Only)
 REG_CURRENT_TEMP: Final = 100  # Current temperature in °C

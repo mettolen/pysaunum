@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added `SaunaSessionState` and `SaunumData.session_state` to distinguish inactive, heating, and cooldown states. The controller reports cooldown as an active session with a target temperature of 0°C.
+- Added `async_restart_software()`, `async_close_cooldown()`, and `async_dismiss_notifications()` one-shot controller actions.
 
 ### Changed
 

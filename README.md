@@ -25,6 +25,7 @@ This library is used by the [Saunum](https://www.home-assistant.io/integrations/
 - 💨 **Fan control** with discrete speeds (0=Default/Off, 1=Low, 2=Medium, 3=High)
 - 🧊 **Cooldown detection** when the controller keeps the session active with a 0°C target
 - 💡 **Light control** for sauna lighting
+- 🛠️ **Controller actions** for software restart, closing cooldown, and dismissing notifications
 - 🔥 **Heater monitoring** with element count (0-3 active elements)
 - 🚨 **Alarm status** monitoring (door, temperature, sensor alarms)
 - 🛡️ **Type hints** for better IDE support and development experience
@@ -194,9 +195,14 @@ assert SaunaType.TYPE_3 == 2
 | `async_set_fan_duration(minutes)`    | Set fan duration            | `minutes: int` (0-20)                   |
 | `async_set_sauna_type(type)`         | Set sauna preset            | `type: int` (0 to device-dependent N-1) |
 | `async_set_light_control(enabled)`   | Control sauna light         | `enabled: bool`                         |
+| `async_restart_software()`           | Restart controller software | None                                    |
+| `async_close_cooldown()`             | Close active cooldown       | None                                    |
+| `async_dismiss_notifications()`      | Dismiss notifications       | None                                    |
 
 Before a session starts, fan speed `0` selects the sauna preset default and
 speeds `1-3` configure the next Modbus-started session. During an active session or cooldown, `0` turns the fan off and `1-3` changes its speed.
+
+The restart action is intended for remote recovery and temporarily interrupts the connection. Closing cooldown has no effect when cooldown is inactive. Dismissing notifications only closes dismissible on-screen messages; it does not clear active alarms or their causes.
 
 ### Data Model (SaunumData)
 
